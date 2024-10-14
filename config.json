@@ -37,7 +37,6 @@
 					{
 						"filter": "json_formatter",
 						"settings": {
-							"obfuscate": true,
 							"singleLine": true
 						}
 					},
@@ -55,7 +54,7 @@
 								],
 								"format": "esm",
 								"minify": true,
-								"outfile": "BP/scripts/index.js",
+								"outfile": "BP/scripts/main.js",
 								"target": "es2020"
 							}
 						}
@@ -75,7 +74,6 @@
 					{
 						"filter": "json_formatter",
 						"settings": {
-							"obfuscate": true,
 							"singleLine": true
 						}
 					},
@@ -93,7 +91,7 @@
 								],
 								"format": "esm",
 								"minify": true,
-								"outfile": "BP/scripts/index.js",
+								"outfile": "BP/scripts/main.js",
 								"target": "es2020"
 							}
 						}
@@ -113,7 +111,6 @@
 					{
 						"filter": "json_formatter",
 						"settings": {
-							"obfuscate": true,
 							"singleLine": true
 						}
 					},
@@ -131,7 +128,7 @@
 								],
 								"format": "esm",
 								"minify": true,
-								"outfile": "BP/scripts/index.js",
+								"outfile": "BP/scripts/main.js",
 								"target": "es2020"
 							}
 						}
