@@ -43,6 +43,7 @@
 					{
 						"filter": "esbuild_executor",
 						"settings": {
+							"removeGlob": "**/*.ts",
 							"buildOptions": {
 								"bundle": true,
 								"entryPoints": [
@@ -53,7 +54,7 @@
 									"@minecraft/server-ui"
 								],
 								"format": "esm",
-								"minify": true,
+								"minify": false,
 								"outfile": "BP/scripts/main.js",
 								"target": "es2020"
 							}
@@ -80,6 +81,7 @@
 					{
 						"filter": "esbuild_executor",
 						"settings": {
+							"removeGlob": "**/*.ts",
 							"buildOptions": {
 								"bundle": true,
 								"entryPoints": [
@@ -90,7 +92,7 @@
 									"@minecraft/server-ui"
 								],
 								"format": "esm",
-								"minify": true,
+								"minify": false,
 								"outfile": "BP/scripts/main.js",
 								"target": "es2020"
 							}
@@ -117,6 +119,7 @@
 					{
 						"filter": "esbuild_executor",
 						"settings": {
+							"removeGlob": "**/*.ts",
 							"buildOptions": {
 								"bundle": true,
 								"entryPoints": [
