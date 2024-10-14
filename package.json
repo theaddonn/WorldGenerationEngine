@@ -1,8 +1,8 @@
 {
-  "name": "mytsStarter",
+  "name": "WGE",
   "version": "0.1.0",
-  "productName": "Minecraft TypeScript Starter Project",
-  "description": "TypeScript Starter",
+  "productName": "WorldGenerationEngine",
+  "description": "A ScriptingAPI based custom worldgen implementation for Bedrock ",
   "private": true,
   "devDependencies": {
     "@minecraft/core-build-tasks": "^1.1.4",
