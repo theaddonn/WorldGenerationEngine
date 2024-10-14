@@ -1,0 +1,24 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "WGE",
+    "description": "World Generation Engine",
+    "uuid": "20699a8a-b829-4fb1-961b-2630d339bf42",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 30]
+  },
+  "modules": [
+    {
+      "description": "World Generation Engine",
+      "type": "resources",
+      "uuid": "47b74c98-961f-49f4-96b6-23ec3b667526",
+      "version": [1, 0, 0]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "88d19ed8-0bdb-4b1e-b1f6-30269e8d2504",
+      "version": [1, 0, 0]
+    }
+  ]
+}
