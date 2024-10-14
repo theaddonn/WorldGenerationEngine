@@ -20,7 +20,7 @@ export function PerlinNoise2D(
   let key = {x, y, amplitude, frequency, octaveCount, persistence, lacunarity};
   let cache = perlinNoise2DCache.get(key);
 
-  if (cache !== null) {
+  if (cache !== undefined) {
     return cache;
   } 
 
