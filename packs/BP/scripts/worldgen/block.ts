@@ -1,4 +1,4 @@
-export const WorldGenBlockTypes = ["deepslate", "stone", "dirt", "grass", "short_grass"];
+export const WorldGenBlockTypes = ["deepslate", "stone", "dirt", "grass", "short_grass", "air"];
 
 export enum WorldGenBlockType {
   Deepslate = 0,
@@ -6,4 +6,5 @@ export enum WorldGenBlockType {
   Dirt,
   Grass,
   GrassShort,
+  Air,
 }

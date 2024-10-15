@@ -1,11 +1,15 @@
-import { system, world, ScriptEventCommandMessageAfterEvent } from "@minecraft/server";
+import { system, world } from "@minecraft/server";
 import { generate } from "./worldgen/subchunk";
 import { cleanUp } from "./worldgen/cleanup";
+import { clearJobs, runJob } from "./job";
+import { handlePlayer } from "./worldgen/chunk";
 
-const job_ids: number[] = [];
 
 system.afterEvents.scriptEventReceive.subscribe((event) => {
+  
   switch (event.id) {
+    
+
     case "wge:generate":
       clearJobsEvent();
       generateEvent();
@@ -24,25 +28,33 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
       break;
   }
 });
-
+system.beforeEvents.watchdogTerminate.subscribe((ev) => {
+  ///Do whatever
+  ev.cancel = true
+  });
 function generateEvent() {
-  var id = system.runJob(
-    generate({ x: -128, y: -64, z: -128 }, { x: 128, y: 320, z: 128 }, world.getDimension("overworld"))
+  runJob(
+    generate({ x: -16, y: -32, z: -16 }, { x: 16, y: 32, z: 16 }, world.getDimension("overworld"))
   );
-  job_ids.push(id);
 }
 
 function clearEvent() {
-  var id = system.runJob(
-    cleanUp({ x: -128, y: -64, z: -128 }, { x: 128, y: 320, z: 128 }, world.getDimension("overworld"))
-  );
-  job_ids.push(id);
+    runJob(cleanUp({ x: -16, y: -32, z: -16 }, { x: 16, y: 32, z: 16 }, world.getDimension("overworld")));
 }
 
 function clearJobsEvent() {
   world.sendMessage(`[§aWGE§r] [§3INFO§r] Started cancelling jobs...`);
-  for (const job_id of job_ids) {
-    system.clearJob(job_id);
-  }
+  clearJobs();
   world.sendMessage(`[§aWGE§r] [§3INFO§r] Finished cancelling jobs!`);
 }
+
+
+
+
+
+system.runInterval(() => {
+  let dim = world.getDimension("overworld");
+  dim.getPlayers().forEach((player) => {
+    handlePlayer(player, dim);
+  })
+}, 0);
