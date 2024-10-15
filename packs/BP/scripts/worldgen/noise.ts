@@ -8,6 +8,18 @@ let perlinNoise3DCache = new Map();
 let simplexNoise2DCache = new Map();
 let simplexNoise3DCache = new Map();
 
+function hashStr(str: string) {
+  var hash = 0,
+    i, chr;
+  if (str.length === 0) return hash;
+  for (i = 0; i < str.length; i++) {
+    chr = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 export function PerlinNoise2D(
   x: number,
   y: number,
@@ -17,7 +29,7 @@ export function PerlinNoise2D(
   persistence: number,
   lacunarity: number
 ) {
-  let key = {x, y, amplitude, frequency, octaveCount, persistence, lacunarity};
+  let key = hashStr(`${x}_${y}_${amplitude}_${frequency}_${octaveCount}_${persistence}_${lacunarity}`);
   let cache = perlinNoise2DCache.get(key);
 
   if (cache !== undefined) {
