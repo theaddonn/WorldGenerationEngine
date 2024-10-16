@@ -78,12 +78,10 @@ export class Chunk {
 
 }
 
-export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
-    for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        dim.setBlockType({ x: world.x, y: val, z: world.y }, "grass");
-    }
-    yield;
 
+
+// This function is responsible for filling any empty holes below the terrain shape
+function downStack(pos: ChunkPosition, dim: Dimension) {
     const noise = chunkNoiseProvider.getOrCacheChunkHeight(pos);
     const base = pos.toBlock();
     for (let x = 0; x < SUBCHUNK_SIZE; x++) {
@@ -120,6 +118,16 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
             }
         }
     }
+}
+
+export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
+    for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+        dim.setBlockType({ x: world.x, y: val, z: world.y }, "grass");
+    }
+    yield;
+
+    downStack(pos, dim);
+    
     yield;
 
 
