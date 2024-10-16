@@ -9,6 +9,7 @@ import { BlockPosition } from "./block";
 const OCTAVE_2D = 5
 const AMPLITUDE = 50;
 const FREQ = 0.0075
+const OFFSET = 100;
 
 
 class ChunkHeightNoise {
@@ -94,7 +95,7 @@ class ChunkNoiseProvider {
 }
 
 export function pollNoise2D(pos: Vector2): number {
-    return PerlinNoise2D(pos.x , pos.y, AMPLITUDE, FREQ, OCTAVE_2D, 0.5, 1.7) + 50;
+    return PerlinNoise2D(pos.x , pos.y, AMPLITUDE, FREQ, OCTAVE_2D, 0.5, 1.7) + OFFSET;
 }
 
 
