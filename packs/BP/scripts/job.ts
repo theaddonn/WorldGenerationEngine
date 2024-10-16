@@ -5,7 +5,6 @@ const job_ids: (number | null)[] = [];
 
 export function runJob(e: Generator<void, void, void>) {
     job_ids.push(system.runJob(e));
-    world.sendMessage(`${job_ids.length}`)
 }
 
 export function clearJobs() {
