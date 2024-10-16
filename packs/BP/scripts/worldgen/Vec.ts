@@ -1,23 +1,23 @@
-import { Vector3 } from "@minecraft/server";
+import { Vector2, Vector3 } from "@minecraft/server";
 import { SUBCHUNK_SIZE } from "./chunk";
 
 
 
 
-export class Vec2<T> {
-    x: T;
-    y: T;
+export class Vec2 {
+    x: number;
+    y: number;
 
-    constructor(x: T, y: T) {
+    constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
 }
 
 export class Vec3 {
-    x: T;
-    y: T;
-    z: T;
+    y: number;
+    z: number;
+    x: number;
 
     constructor(x: number, y: number, z:number ) {
         this.x = x;
@@ -38,9 +38,16 @@ export class Vec3 {
         this.z += ammount;
         return this;
     }
+
+    flatten(): Vec3 {
+        return new Vec3(this.x, 0, this.z);
+    }
 }
 
 
 export function Vector3ToString(vec: Vector3): String {
     return `${vec.x} ${vec.y} ${vec.z}`
+}
+export function Vector2ToString(vec: Vector2): String {
+    return `${vec.x} ${vec.y}`
 }

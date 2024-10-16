@@ -1,8 +1,8 @@
 import { system, world } from "@minecraft/server";
-import { generate } from "./worldgen/subchunk";
 import { cleanUp } from "./worldgen/cleanup";
 import { clearJobs, runJob } from "./job";
-import { handlePlayer } from "./worldgen/chunk";
+import { PerlinNoise3D } from "./worldgen/noise";
+import { managePlayer } from "./worldgen/generation";
 
 
 system.afterEvents.scriptEventReceive.subscribe((event) => {
@@ -55,6 +55,6 @@ function clearJobsEvent() {
 system.runInterval(() => {
   let dim = world.getDimension("overworld");
   dim.getPlayers().forEach((player) => {
-    handlePlayer(player, dim);
+    managePlayer(player, dim);
   })
 }, 0);

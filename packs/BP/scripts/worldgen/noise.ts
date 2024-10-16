@@ -1,3 +1,4 @@
+import { world } from "@minecraft/server";
 import Noise from "noise-ts";
 
 const seed = 420 + 69;
@@ -29,24 +30,13 @@ export function PerlinNoise2D(
   persistence: number,
   lacunarity: number
 ) {
-  let key = hashStr(`${x}_${y}_${amplitude}_${frequency}_${octaveCount}_${persistence}_${lacunarity}`);
-  let cache = perlinNoise2DCache.get(key);
-
-  if (cache !== undefined) {
-    return cache;
-  } 
-
   let value = 0;
-
   for (let i = 0; i < octaveCount; i++) {
     let offset = +(seed * i);
     value += amplitude * noise.perlin2(x * frequency + offset, y * frequency + offset);
     amplitude *= persistence;
     frequency *= lacunarity;
   }
-
-  perlinNoise2DCache.set(key, value)
-
   return value;
 }
 
@@ -68,6 +58,7 @@ export function PerlinNoise3D(
     amplitude *= persistence;
     frequency *= lacunarity;
   }
+
 
   return value;
 }
