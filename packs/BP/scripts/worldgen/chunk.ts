@@ -27,7 +27,7 @@ export class ChunkPosition {
     }
 
     distance(other: Vector2): number {
-        return ((other.x - this.x) ** 2 ) + ((other.y - this.y) ** 2)
+        return ((other.x - this.x) ** 2) + ((other.y - this.y) ** 2)
 
     }
 }
@@ -64,8 +64,8 @@ export class Chunk {
         }
     }
 
-    static *iterOverBlocksWorldLocal(base: Vector2): Generator<{local: Vector2, world: Vector2}> {
-        
+    static *iterOverBlocksWorldLocal(base: Vector2): Generator<{ local: Vector2, world: Vector2 }> {
+
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
                 yield {
@@ -75,61 +75,61 @@ export class Chunk {
             }
         }
     }
-    
+
 }
 
 export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
-    for (let {world, val} of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        dim.setBlockType({x: world.x, y: val, z: world.y}, "grass");
-    }   
+    for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+        dim.setBlockType({ x: world.x, y: val, z: world.y }, "grass");
+    }
     yield;
 
-    const noise = chunkNoiseProvider.getOrCacheChunkHeight(pos); 
+    const noise = chunkNoiseProvider.getOrCacheChunkHeight(pos);
     const base = pos.toBlock();
-    let finished = false;
-    for (let offset = -1; !finished; offset--) {
-        for (let x = 0; x < SUBCHUNK_SIZE; x++) {
-            for (let z = 0; z < SUBCHUNK_SIZE; z++) {
-                const currentHeight = noise.get({x: x, y: z});
-                const samplePositions: BlockPosition[] = [
-                    BlockPosition.fromVec({x: base.x + x - 1, y: base.y + z}),
-                    BlockPosition.fromVec({x: base.x + x + 1, y: base.y + z}),
-                    BlockPosition.fromVec({x: base.x + x, y: base.y + z - 1}),
-                    BlockPosition.fromVec({x: base.x + x, y: base.y + z + 1}),
-                ];
+    for (let x = 0; x < SUBCHUNK_SIZE; x++) {
+        for (let z = 0; z < SUBCHUNK_SIZE; z++) {
+            const currentHeight = noise.get({ x: x, y: z });
+            const samplePositions: BlockPosition[] = [
+                BlockPosition.fromVec({ x: base.x + x - 1, y: base.y + z }),
+                BlockPosition.fromVec({ x: base.x + x + 1, y: base.y + z }),
+                BlockPosition.fromVec({ x: base.x + x, y: base.y + z - 1 }),
+                BlockPosition.fromVec({ x: base.x + x, y: base.y + z + 1 }),
+            ];
+            let finished = false;
+            for (let offset = 1; !finished; offset++) {
                 let shouldFill = false;
                 for (let position of samplePositions) {
-                    let height = -1;
+                    let height;
                     if (ChunkPosition.fromWorld(position) !== pos) {
                         height = pollNoise2D(position);
                     } else {
                         height = noise.get(position.toLocalChunk());
                     }
-                    if (height < currentHeight + offset) {
+                    if (height < currentHeight - offset) {
                         shouldFill = true;
                         break;
                     }
                 }
                 if (shouldFill) {
-                    dim.setBlockType({x: base.x + x, y: currentHeight + offset, z: base.y + z}, "dirt");
+                    dim.setBlockType({ x: base.x + x, y: currentHeight - offset, z: base.y + z }, "dirt");
+                    
                 } else {
                     finished = true;
                 }
-            
+
             }
         }
     }
     yield;
-    
-    
-    
-    for (let {world, val} of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+
+
+
+    for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         const seed = Math.random();
         if (seed > GRASS_THRESHHOLD && seed < TALL_THRESHHOLD) {
-            dim.setBlockType({x: world.x, y: val+1, z: world.y}, "short_grass");
-        } else if (seed > TALL_THRESHHOLD){
-            dim.setBlockType({x: world.x, y: val+1, z: world.y}, "tall_grass");
+            dim.setBlockType({ x: world.x, y: val + 1, z: world.y }, "short_grass");
+        } else if (seed > TALL_THRESHHOLD) {
+            dim.setBlockType({ x: world.x, y: val + 1, z: world.y }, "tall_grass");
         }
-    }   
-    yield;
+    }
 }
