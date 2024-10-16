@@ -1,7 +1,4 @@
 import { system, world } from "@minecraft/server";
-import { cleanUp } from "./worldgen/cleanup";
-import { clearJobs, runJob } from "./job";
-import { PerlinNoise3D } from "./worldgen/noise";
 import { managePlayer } from "./worldgen/generation";
 
 system.runInterval(() => {
