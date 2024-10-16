@@ -1,30 +1,30 @@
 {
-  "format_version": 2,
-  "header": {
-    "name": "WGE",
-    "description": "World Generation Engine",
-    "uuid": "88d19ed8-0bdb-4b1e-b1f6-30269e8d2504",
-    "version": [1, 0, 0],
-    "min_engine_version": [1, 21, 30]
-  },
-  "modules": [
-    {
-      "description": "World Generation Engine",
-      "language": "javascript",
-      "type": "script",
-      "uuid": "86c8bd5c-daf2-4444-b0bc-defbb98f0267",
-      "version": [1, 0, 0],
-      "entry": "scripts/main.js"
-    }
-  ],
-  "dependencies": [
-    {
-      "module_name": "@minecraft/server",
-      "version": "1.15.0-beta"
+    "format_version": 2,
+    "header": {
+        "name": "WGE",
+        "description": "World Generation Engine",
+        "uuid": "88d19ed8-0bdb-4b1e-b1f6-30269e8d2504",
+        "version": [1, 0, 0],
+        "min_engine_version": [1, 21, 30]
     },
-    {
-      "uuid": "20699a8a-b829-4fb1-961b-2630d339bf42",
-      "version": [1, 0, 0]
-    }
-  ]
+    "modules": [
+        {
+            "description": "World Generation Engine",
+            "language": "javascript",
+            "type": "script",
+            "uuid": "86c8bd5c-daf2-4444-b0bc-defbb98f0267",
+            "version": [1, 0, 0],
+            "entry": "scripts/main.js"
+        }
+    ],
+    "dependencies": [
+        {
+            "module_name": "@minecraft/server",
+            "version": "1.15.0-beta"
+        },
+        {
+            "uuid": "20699a8a-b829-4fb1-961b-2630d339bf42",
+            "version": [1, 0, 0]
+        }
+    ]
 }
