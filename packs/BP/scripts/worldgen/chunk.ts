@@ -84,6 +84,7 @@ export class Chunk {
 function downStack(pos: ChunkPosition, dim: Dimension) {
     const noise = chunkNoiseProvider.getOrCacheChunkHeight(pos);
     const base = pos.toBlock();
+    const heights: Int16Array = new Int16Array(4);
     for (let x = 0; x < SUBCHUNK_SIZE; x++) {
         for (let z = 0; z < SUBCHUNK_SIZE; z++) {
             const currentHeight = noise.get({ x: x, y: z });
@@ -93,28 +94,31 @@ function downStack(pos: ChunkPosition, dim: Dimension) {
                 BlockPosition.fromVec({ x: base.x + x, y: base.y + z - 1 }),
                 BlockPosition.fromVec({ x: base.x + x, y: base.y + z + 1 }),
             ];
+            
+            for (let idx = 0; idx < samplePositions.length; idx++) {
+                const position = samplePositions[idx];
+                let height;
+                if (ChunkPosition.fromWorld(position) !== pos) {
+                    height = pollNoise2D(position);
+                } else {
+                    height = noise.get(position.toLocalChunk());
+                }
+                heights[idx] = height;
+            }
             let finished = false;
             for (let offset = 1; !finished; offset++) {
                 let shouldFill = false;
-                for (let position of samplePositions) {
-                    let height;
-                    if (ChunkPosition.fromWorld(position) !== pos) {
-                        height = pollNoise2D(position);
-                    } else {
-                        height = noise.get(position.toLocalChunk());
-                    }
+                for (const height of heights) {
                     if (height < currentHeight - offset) {
                         shouldFill = true;
                         break;
                     }
                 }
-                if (shouldFill) {
+                if (shouldFill === true) {
                     dim.setBlockType({ x: base.x + x, y: currentHeight - offset, z: base.y + z }, "dirt");
-                    
                 } else {
                     finished = true;
                 }
-
             }
         }
     }
