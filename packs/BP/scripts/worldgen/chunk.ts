@@ -3,11 +3,10 @@ import { Vec2, Vec3, Vector3ToString } from "./Vec";
 import { runJob } from "../job";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
+import { biomeManager } from "./biome";
 export const CHUNK_RANGE = 6;
 const Y_CHUNK_RANGE = 1;
 export const SUBCHUNK_SIZE = 16;
-const GRASS_THRESHHOLD = 0.6;
-const TALL_THRESHHOLD = 0.96;
 
 export class ChunkPosition {
     x: number;
@@ -90,23 +89,25 @@ function downStack(pos: ChunkPosition, dim: Dimension) {
                 const position = samplePositions[idx];
                 let height;
                 if (ChunkPosition.fromWorld(position) !== pos) {
-                    height = pollNoise2D(position);
+                    height = pollNoise2D(position)[0];
                 } else {
                     height = noise.get(position.toLocalChunk());
                 }
                 heights[idx] = height;
             }
             let finished = false;
+            const biome = noise.getBiome(new Vec2(x, z));
+            const surfaceOffset =  biomeManager.surfaceOffset(biome);
             for (let offset = 1; !finished; offset++) {
                 let shouldFill = false;
                 for (const height of heights) {
-                    if (height < currentHeight - offset) {
+                    if (height < currentHeight - offset - surfaceOffset) {
                         shouldFill = true;
                         break;
                     }
                 }
                 if (shouldFill === true) {
-                    dim.setBlockType({ x: base.x + x, y: currentHeight - offset, z: base.y + z }, "dirt");
+                    dim.setBlockType({ x: base.x + x, y: currentHeight - surfaceOffset - offset, z: base.y + z }, biomeManager.underground(biome));
                 } else {
                     finished = true;
                 }
@@ -116,21 +117,27 @@ function downStack(pos: ChunkPosition, dim: Dimension) {
 }
 
 export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
-    for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        dim.setBlockType({ x: world.x, y: val, z: world.y }, "grass");
+    for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+        const surfaceDepth = biomeManager.surfaceOffset(biome);
+        if (biomeManager.multiLayerSurface(biome)) {
+            for (let x = 0; x < surfaceDepth; x++) {
+                dim.setBlockType({ x: world.x, y: val - x, z: world.y }, biomeManager.surface(biome));
+            }
+        } else {
+            dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
+        }
+
+        if (biomeManager.support(biome)) {
+            dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
+        }
     }
     yield;
 
     downStack(pos, dim);
 
     yield;
-
-    for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        const seed = Math.random();
-        if (seed > GRASS_THRESHHOLD && seed < TALL_THRESHHOLD) {
-            dim.setBlockType({ x: world.x, y: val + 1, z: world.y }, "short_grass");
-        } else if (seed > TALL_THRESHHOLD) {
-            dim.setBlockType({ x: world.x, y: val + 1, z: world.y }, "tall_grass");
-        }
+    for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+        biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);
     }
+    
 }
