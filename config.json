@@ -1,143 +1,128 @@
 {
-	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
-	"author": "theaddonn \u003ctheaddonn@gmail.com\u003e",
-	"name": "WGE",
-	"packs": {
-		"behaviorPack": "./packs/BP",
-		"resourcePack": "./packs/RP"
-	},
-	"regolith": {
-		"dataPath": "./packs/data",
-		"filterDefinitions": {
-			"esbuild_executor": {
-				"url": "github.com/MajestikButter/Regolith-Filters",
-				"version": "6fa6a6a9298f7d033d0f2e421edfb33292807aae"
-			},
-			"json_cleaner": {
-				"url": "github.com/Bedrock-OSS/regolith-filters",
-				"version": "1.1.1"
-			},
-			"json_formatter": {
-				"url": "github.com/MajestikButter/Regolith-Filters",
-				"version": "6fa6a6a9298f7d033d0f2e421edfb33292807aae"
-			}
-		},
-		"formatVersion": "1.4.0",
-		"profiles": {
-			"default": {
-				"export": {
-					"build": "standard",
-					"readOnly": false,
-					"target": "development"
-				},
-				"filters": [
-					{
-						"filter": "json_cleaner"
-					},
-					{
-						"filter": "json_formatter",
-						"settings": {
-							"singleLine": true
-						}
-					},
-					{
-						"filter": "esbuild_executor",
-						"settings": {
-							"removeGlob": "**/*.ts",
-							"buildOptions": {
-								"bundle": true,
-								"entryPoints": [
-									"BP/scripts/main.ts"
-								],
-								"external": [
-									"@minecraft/server",
-									"@minecraft/server-ui"
-								],
-								"format": "esm",
-								"minify": false,
-								"outfile": "BP/scripts/main.js",
-								"target": "es2020"
-							}
-						}
-					}
-				]
-			},
-			"preview": {
-				"export": {
-					"build": "preview",
-					"readOnly": false,
-					"target": "development"
-				},
-				"filters": [
-					{
-						"filter": "json_cleaner"
-					},
-					{
-						"filter": "json_formatter",
-						"settings": {
-							"singleLine": true
-						}
-					},
-					{
-						"filter": "esbuild_executor",
-						"settings": {
-							"removeGlob": "**/*.ts",
-							"buildOptions": {
-								"bundle": true,
-								"entryPoints": [
-									"BP/scripts/main.ts"
-								],
-								"external": [
-									"@minecraft/server",
-									"@minecraft/server-ui"
-								],
-								"format": "esm",
-								"minify": false,
-								"outfile": "BP/scripts/main.js",
-								"target": "es2020"
-							}
-						}
-					}
-				]
-			},
-			"build": {
-				"export": {
-					"build": "standard",
-					"readOnly": false,
-					"target": "local"
-				},
-				"filters": [
-					{
-						"filter": "json_cleaner"
-					},
-					{
-						"filter": "json_formatter",
-						"settings": {
-							"singleLine": true
-						}
-					},
-					{
-						"filter": "esbuild_executor",
-						"settings": {
-							"removeGlob": "**/*.ts",
-							"buildOptions": {
-								"bundle": true,
-								"entryPoints": [
-									"BP/scripts/main.ts"
-								],
-								"external": [
-									"@minecraft/server",
-									"@minecraft/server-ui"
-								],
-								"format": "esm",
-								"minify": true,
-								"outfile": "BP/scripts/main.js",
-								"target": "es2020"
-							}
-						}
-					}
-				]
-			}
-		}
-	}
+    "$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
+    "author": "theaddonn \u003ctheaddonn@gmail.com\u003e",
+    "name": "WGE",
+    "packs": {
+        "behaviorPack": "./packs/BP",
+        "resourcePack": "./packs/RP"
+    },
+    "regolith": {
+        "dataPath": "./packs/data",
+        "filterDefinitions": {
+            "esbuild_executor": {
+                "url": "github.com/MajestikButter/Regolith-Filters",
+                "version": "6fa6a6a9298f7d033d0f2e421edfb33292807aae"
+            },
+            "json_cleaner": {
+                "url": "github.com/Bedrock-OSS/regolith-filters",
+                "version": "1.1.1"
+            },
+            "json_formatter": {
+                "url": "github.com/MajestikButter/Regolith-Filters",
+                "version": "6fa6a6a9298f7d033d0f2e421edfb33292807aae"
+            }
+        },
+        "formatVersion": "1.4.0",
+        "profiles": {
+            "default": {
+                "export": {
+                    "build": "standard",
+                    "readOnly": false,
+                    "target": "development"
+                },
+                "filters": [
+                    {
+                        "filter": "json_cleaner"
+                    },
+                    {
+                        "filter": "json_formatter",
+                        "settings": {
+                            "singleLine": true
+                        }
+                    },
+                    {
+                        "filter": "esbuild_executor",
+                        "settings": {
+                            "removeGlob": "**/*.ts",
+                            "buildOptions": {
+                                "bundle": true,
+                                "entryPoints": ["BP/scripts/main.ts"],
+                                "external": ["@minecraft/server", "@minecraft/server-ui"],
+                                "format": "esm",
+                                "minify": false,
+                                "outfile": "BP/scripts/main.js",
+                                "target": "es2020"
+                            }
+                        }
+                    }
+                ]
+            },
+            "preview": {
+                "export": {
+                    "build": "preview",
+                    "readOnly": false,
+                    "target": "development"
+                },
+                "filters": [
+                    {
+                        "filter": "json_cleaner"
+                    },
+                    {
+                        "filter": "json_formatter",
+                        "settings": {
+                            "singleLine": true
+                        }
+                    },
+                    {
+                        "filter": "esbuild_executor",
+                        "settings": {
+                            "removeGlob": "**/*.ts",
+                            "buildOptions": {
+                                "bundle": true,
+                                "entryPoints": ["BP/scripts/main.ts"],
+                                "external": ["@minecraft/server", "@minecraft/server-ui"],
+                                "format": "esm",
+                                "minify": false,
+                                "outfile": "BP/scripts/main.js",
+                                "target": "es2020"
+                            }
+                        }
+                    }
+                ]
+            },
+            "build": {
+                "export": {
+                    "build": "standard",
+                    "readOnly": false,
+                    "target": "local"
+                },
+                "filters": [
+                    {
+                        "filter": "json_cleaner"
+                    },
+                    {
+                        "filter": "json_formatter",
+                        "settings": {
+                            "singleLine": true
+                        }
+                    },
+                    {
+                        "filter": "esbuild_executor",
+                        "settings": {
+                            "removeGlob": "**/*.ts",
+                            "buildOptions": {
+                                "bundle": true,
+                                "entryPoints": ["BP/scripts/main.ts"],
+                                "external": ["@minecraft/server", "@minecraft/server-ui"],
+                                "format": "esm",
+                                "minify": true,
+                                "outfile": "BP/scripts/main.js",
+                                "target": "es2020"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
 }

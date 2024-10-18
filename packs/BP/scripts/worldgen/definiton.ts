@@ -1,7 +1,7 @@
 import { Biome } from "./biome";
 
 export class WorldDefinition {
-  private biomes: Biome[] = [];
+    private biomes: Biome[] = [];
 
-  constructor() {}
+    constructor() {}
 }

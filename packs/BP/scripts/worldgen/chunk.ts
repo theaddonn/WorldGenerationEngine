@@ -27,8 +27,7 @@ export class ChunkPosition {
     }
 
     distance(other: Vector2): number {
-        return ((other.x - this.x) ** 2) + ((other.y - this.y) ** 2)
-
+        return (other.x - this.x) ** 2 + (other.y - this.y) ** 2;
     }
 }
 
@@ -36,16 +35,13 @@ export class LocalChunkPosition {
     x: number;
     y: number;
 
-
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
 }
 
-
 export class Chunk {
-
     static *iterOverBlocksLocal(): Generator<Vector2> {
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
@@ -53,7 +49,6 @@ export class Chunk {
             }
         }
     }
-
 
     // The base param is chunk space
     static *iterOverBlocksWorld(base: Vector2): Generator<Vector2> {
@@ -64,21 +59,17 @@ export class Chunk {
         }
     }
 
-    static *iterOverBlocksWorldLocal(base: Vector2): Generator<{ local: Vector2, world: Vector2 }> {
-
+    static *iterOverBlocksWorldLocal(base: Vector2): Generator<{ local: Vector2; world: Vector2 }> {
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
                 yield {
                     local: new Vec2(x, z),
-                    world: new Vec2(x + base.x * SUBCHUNK_SIZE, z + base.y * SUBCHUNK_SIZE)
-                }
+                    world: new Vec2(x + base.x * SUBCHUNK_SIZE, z + base.y * SUBCHUNK_SIZE),
+                };
             }
         }
     }
-
 }
-
-
 
 // This function is responsible for filling any empty holes below the terrain shape
 function downStack(pos: ChunkPosition, dim: Dimension) {
@@ -131,10 +122,8 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
     yield;
 
     downStack(pos, dim);
-    
+
     yield;
-
-
 
     for (let { world, val } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         const seed = Math.random();
