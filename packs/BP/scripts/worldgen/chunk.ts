@@ -101,7 +101,7 @@ function downStack(pos: ChunkPosition, dim: Dimension) {
             for (let offset = 1; !finished; offset++) {
                 let shouldFill = false;
                 for (const height of heights) {
-                    if (height < currentHeight - offset - surfaceOffset) {
+                    if (height < (currentHeight - offset - surfaceOffset)) {
                         shouldFill = true;
                         break;
                     }
@@ -117,6 +117,9 @@ function downStack(pos: ChunkPosition, dim: Dimension) {
 }
 
 export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
+    chunkNoiseProvider.getOrCacheChunkHeight(pos);
+    yield;
+
     for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         const surfaceDepth = biomeManager.surfaceOffset(biome);
         if (biomeManager.multiLayerSurface(biome)) {
@@ -134,7 +137,6 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
     yield;
 
     downStack(pos, dim);
-
     yield;
     for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);

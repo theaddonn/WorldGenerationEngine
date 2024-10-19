@@ -47,6 +47,11 @@ export function PerlinNoise2D(
     return [value, raw];
 }
 
+export function singlePerlin2D(x: number, y: number, freq: number) {
+    const offset = +(seed * 200);
+    return (noise.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
+}
+
 export function PerlinNoise3D(
     x: number,
     y: number,
