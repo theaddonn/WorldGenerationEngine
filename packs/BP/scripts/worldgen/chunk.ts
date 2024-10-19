@@ -39,6 +39,21 @@ export class LocalChunkPosition {
         this.x = x;
         this.y = y;
     }
+
+    static fromWorld(pos: Vector2): LocalChunkPosition {
+        let x = pos.x;
+        let z = pos.y;
+        if (pos.x < 0) {
+            x = -x;
+        }
+        if (pos.y < 0) {
+            z = -z;
+        } 
+
+        return new LocalChunkPosition(
+            Math.floor(x % SUBCHUNK_SIZE), Math.floor(z % SUBCHUNK_SIZE)
+        )
+    }
 }
 
 export class Chunk {
@@ -151,7 +166,8 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
 
     yield;
     for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);
+        try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {}
+        yield;
     }
     
 }
