@@ -29,16 +29,27 @@ export function PerlinNoise2D(
     frequency: number,
     octaveCount: number,
     persistence: number,
-    lacunarity: number
-) {
+    lacunarity: number,
+    rawAmplitude: number
+): number[] {
     let value = 0;
+    let raw = 0;
     for (let i = 0; i < octaveCount; i++) {
         let offset = +(seed * i);
-        value += amplitude * noise.perlin2(x * frequency + offset, y * frequency + offset);
+        const trueNoise = noise.perlin2(x * frequency + offset, y * frequency + offset); 
+        raw += rawAmplitude * trueNoise;
+        value += amplitude * trueNoise;
         amplitude *= persistence;
         frequency *= lacunarity;
+        rawAmplitude *= persistence;
+
     }
-    return value;
+    return [value, raw];
+}
+
+export function singlePerlin2D(x: number, y: number, freq: number) {
+    const offset = +(seed * 200);
+    return (noise.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
 }
 
 export function PerlinNoise3D(
