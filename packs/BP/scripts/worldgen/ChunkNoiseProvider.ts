@@ -1,5 +1,5 @@
 import { Vector2, Vector3, world } from "@minecraft/server";
-import { Chunk, ChunkPosition, SUBCHUNK_SIZE } from "./chunk";
+import { Chunk, ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { idx2D } from "./util";
 import { PerlinNoise2D, singlePerlin2D } from "./noise";
 import { Vec2, Vector2ToString } from "./Vec";
@@ -38,7 +38,7 @@ class ChunkNoise {
 
 class ChunkNoiseProvider {
     chunkHeightmap: Map<String, ChunkNoise>;
-    heightCache: Map<String, Int16Array>
+    heightCache: Map<String, Float32Array>
     amplitudeConstant: number; // This is a little hacky but works :33333
 
     constructor() {
@@ -123,6 +123,18 @@ class ChunkNoiseProvider {
                 climateNoise[index] = singlePerlin2D(base.x + x, base.y + z, 0.00075);
             }
         }
+        this.heightCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), climateNoise);
+    }
+
+    getClimateNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
+
+        const cache = this.heightCache.get(Vector2ToString(Chunk));
+        if (cache === undefined) {
+            return 0.5;
+        } else {
+            return cache[idx2D(Local)];
+        }
+
     }
     
     private generateBiomeData(
