@@ -21,7 +21,7 @@ function hashStr(str: string) {
     }
     return hash;
 }
-// TODO: Make return only the RAW value then have some code in another place which handles the multiplication into a usable state
+
 export function PerlinNoise2D(
     x: number,
     y: number,
