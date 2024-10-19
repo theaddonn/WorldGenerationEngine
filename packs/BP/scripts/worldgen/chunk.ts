@@ -1,9 +1,10 @@
 import { Dimension, Player, Vector2, world } from "@minecraft/server";
-import { Vec2, Vec3, Vector3ToString } from "./Vec";
+import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./Vec";
 import { runJob } from "../job";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
+import { visitedChunks } from "./generation";
 export const CHUNK_RANGE = 6;
 const Y_CHUNK_RANGE = 1;
 export const SUBCHUNK_SIZE = 16;
@@ -71,7 +72,7 @@ export class Chunk {
 }
 
 // This function is responsible for filling any empty holes below the terrain shape
-function downStack(pos: ChunkPosition, dim: Dimension) {
+function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
     const noise = chunkNoiseProvider.getOrCacheChunkHeight(pos);
     const base = pos.toBlock();
     const heights: Int16Array = new Int16Array(4);
@@ -113,6 +114,7 @@ function downStack(pos: ChunkPosition, dim: Dimension) {
                 }
             }
         }
+        yield 1;
     }
 }
 
@@ -120,23 +122,33 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
     chunkNoiseProvider.getOrCacheChunkHeight(pos);
     yield;
 
+    let wld = world;
+
     for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         const surfaceDepth = biomeManager.surfaceOffset(biome);
-        if (biomeManager.multiLayerSurface(biome)) {
-            for (let x = 0; x < surfaceDepth; x++) {
-                dim.setBlockType({ x: world.x, y: val - x, z: world.y }, biomeManager.surface(biome));
+        try {
+            if (biomeManager.multiLayerSurface(biome)) {
+                for (let x = 0; x < surfaceDepth; x++) {
+                    dim.setBlockType({ x: world.x, y: val - x, z: world.y }, biomeManager.surface(biome));
+                }
+            } else {
+                dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
             }
-        } else {
-            dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
-        }
-
-        if (biomeManager.support(biome)) {
-            dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
+    
+            if (biomeManager.support(biome)) {
+                dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
+            }
+        } catch {
+            visitedChunks.delete(Vector2ToString(pos));
+            return;
         }
     }
     yield;
+    
+    for (const e of downStack(pos, dim)) {
+        yield;
+    }
 
-    downStack(pos, dim);
     yield;
     for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);

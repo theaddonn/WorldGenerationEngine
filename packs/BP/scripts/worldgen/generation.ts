@@ -4,7 +4,7 @@ import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
 import { idx2D } from "./util";
 
-let visitedChunks = new Set<String>();
+export let visitedChunks = new Set<String>();
 
 function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
     if (visitedChunks.has(Vector2ToString(pos))) {
