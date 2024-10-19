@@ -1,12 +1,10 @@
 import { Dimension, Player, Vector2, world } from "@minecraft/server";
 import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./Vec";
-import { runJob } from "../job";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
-import { visitedChunks } from "./generation";
+import {bailGeneration, removeChunk, visitedChunks } from "./generation";
 export const CHUNK_RANGE = 6;
-const Y_CHUNK_RANGE = 1;
 export const SUBCHUNK_SIZE = 16;
 
 export class ChunkPosition {
@@ -137,8 +135,6 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
     chunkNoiseProvider.getOrCacheChunkHeight(pos);
     yield;
 
-    let wld = world;
-
     for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         const surfaceDepth = biomeManager.surfaceOffset(biome);
         try {
@@ -154,20 +150,28 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
                 dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
             }
         } catch {
-            visitedChunks.delete(Vector2ToString(pos));
+            bailGeneration(pos);
             return;
         }
     }
     yield;
     
-    for (const e of downStack(pos, dim)) {
-        yield;
+    try {
+        for (const e of downStack(pos, dim)) {
+            yield;
+        }
+    } catch {
+        bailGeneration(pos);
     }
 
     yield;
+    let lastX = -1;
     for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {}
-        yield;
+        try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {return bailGeneration(pos);}
+        if (lastX != world.x) {
+            yield;
+        }
+        lastX = world.x;
     }
-    
+    removeChunk();
 }
