@@ -6,8 +6,8 @@ import { HEIGHT_MAX } from "./ChunkNoiseProvider";
 
 export enum ClimateSelections {
     FROZEN = 0.1,
-    COLD = 0.25,
-    NORMAL = 0.5,
+    COLD = 0.35,
+    NORMAL = 0.6,
     WARM = 0.75,
     BOILING = 1.0,
     DONT_CARE = 2.0
@@ -58,13 +58,13 @@ class BiomeList {
     }
 
     private getClimate(raw: number): ClimateSelections {
-        if (raw <= 0.1) {
+        if (raw <= ClimateSelections.FROZEN) {
             return ClimateSelections.FROZEN;
-        } else if (raw <= 0.25) {
+        } else if (raw <= ClimateSelections.COLD) {
             return ClimateSelections.COLD;
-        } else if (raw <= 0.5){
+        } else if (raw <= ClimateSelections.NORMAL){
             return ClimateSelections.NORMAL;
-        } else if (raw <= 0.75) {
+        } else if (raw <= ClimateSelections.WARM) {
             return ClimateSelections.WARM;
         } else {
             return ClimateSelections.BOILING;
@@ -140,7 +140,7 @@ class BiomeList {
             const fallbackHeight = this.findClosestHeight(currentHeight);
             possibleBiomes = this.filterBiomesWithFallbackHeight(currentClimate, fallbackHeight);
         }
-        
+
         if (possibleBiomes.length === 0) {
             const fallbackClimate = this.findClosestClimate(currentClimate);
             possibleBiomes = this.filterBiomesWithFallbackClimate(fallbackClimate, currentHeight);
