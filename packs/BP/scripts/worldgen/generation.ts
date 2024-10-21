@@ -5,8 +5,8 @@ import { runJob } from "../job";
 import { idx2D } from "./util";
 
 export let visitedChunks = new Set<String>();
-const MAX_BUILDING_CHUNKS = 100;
-let currentChunkBuildCount = 0;
+export const MAX_BUILDING_CHUNKS = 100;
+export let currentChunkBuildCount = 0;
 
 export function removeChunk() {
     currentChunkBuildCount--;
@@ -29,7 +29,6 @@ function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
     visitedChunks.add(Vector2ToString(pos));
 
     runJob(buildChunk(pos, dim));
-
 }
 
 export function managePlayer(player: Player, dim: Dimension) {

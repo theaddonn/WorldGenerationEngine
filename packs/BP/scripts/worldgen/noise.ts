@@ -1,8 +1,8 @@
 import { world } from "@minecraft/server";
 import Noise from "noise-ts";
 
-const seed = 420 + 69;
-const noise = new Noise(seed);
+export const SEED = 420 + 69;
+const NOISE = new Noise(SEED);
 
 let perlinNoise2DCache = new Map();
 let perlinNoise3DCache = new Map();
@@ -35,21 +35,20 @@ export function PerlinNoise2D(
     let value = 0;
     let raw = 0;
     for (let i = 0; i < octaveCount; i++) {
-        let offset = +(seed * i);
-        const trueNoise = noise.perlin2(x * frequency + offset, y * frequency + offset); 
+        let offset = +(SEED * i);
+        const trueNoise = NOISE.perlin2(x * frequency + offset, y * frequency + offset);
         raw += rawAmplitude * trueNoise;
         value += amplitude * trueNoise;
         amplitude *= persistence;
         frequency *= lacunarity;
         rawAmplitude *= persistence;
-
     }
     return [value, raw];
 }
 
 export function singlePerlin2D(x: number, y: number, freq: number) {
-    const offset = +(seed * 200);
-    return (noise.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
+    const offset = +(SEED * 200);
+    return (NOISE.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
 }
 
 export function PerlinNoise3D(
@@ -65,8 +64,8 @@ export function PerlinNoise3D(
     let value = 0;
 
     for (let i = 0; i < octaveCount; i++) {
-        let offset = +(seed * i);
-        value += amplitude * noise.perlin3(x * frequency + offset, y * frequency + offset, z * frequency + offset);
+        let offset = +(SEED * i);
+        value += amplitude * NOISE.perlin3(x * frequency + offset, y * frequency + offset, z * frequency + offset);
         amplitude *= persistence;
         frequency *= lacunarity;
     }
@@ -86,8 +85,8 @@ export function SimplexNoise2D(
     let value = 0;
 
     for (let i = 0; i < octaveCount; i++) {
-        let offset = +(seed * i);
-        value += amplitude * noise.simplex2(x * frequency + offset, y * frequency + offset);
+        let offset = +(SEED * i);
+        value += amplitude * NOISE.simplex2(x * frequency + offset, y * frequency + offset);
         amplitude *= persistence;
         frequency *= lacunarity;
     }
@@ -108,8 +107,8 @@ export function SimplexNoise3D(
     let value = 0;
 
     for (let i = 0; i < octaveCount; i++) {
-        let offset = +(seed * i);
-        value += amplitude * noise.simplex3(x * frequency + offset, y * frequency + offset, z * frequency + offset);
+        let offset = +(SEED * i);
+        value += amplitude * NOISE.simplex3(x * frequency + offset, y * frequency + offset, z * frequency + offset);
         amplitude *= persistence;
         frequency *= lacunarity;
     }
