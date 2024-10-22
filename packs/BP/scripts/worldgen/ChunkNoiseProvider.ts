@@ -7,14 +7,38 @@ import { BlockPosition } from "./block";
 import { biomeManager } from "./biome";
 import { mainLocation } from "../main";
 
-export const OCTAVE_2D = 5;
-export const AMPLITUDE = 50;
-export const FREQUENCY = 0.0055;
-export const BASE_OFFSET = 70;
-export const PERSISTANCE = 0.5;
+export let OCTAVE_2D = 5;
+export let AMPLITUDE = 50;
+export let FREQUENCY = 0.0055;
+export let BASE_OFFSET = 70;
+export let PERSISTANCE = 0.5;
 
-export const HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
-export const HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
+export function setOctave2D(val: number) {
+    OCTAVE_2D = val;
+}
+
+export function setAmplitude(val: number) {
+    AMPLITUDE = val;
+
+    HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
+    HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
+}
+
+export function setFrequency(val: number) {
+    FREQUENCY = val;
+}
+
+export function setBaseOffset(val: number) {
+    BASE_OFFSET = val;
+}
+
+export function setPersistance(val: number) {
+    PERSISTANCE = val;
+}
+
+
+export let HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
+export let HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
 world.sendMessage(`new min and max ${HEIGHT_MIN} ${HEIGHT_MAX}`);
 
 class ChunkNoise {

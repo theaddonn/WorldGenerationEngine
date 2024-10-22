@@ -1,7 +1,7 @@
 import { world } from "@minecraft/server";
 import Noise from "noise-ts";
 
-export const SEED = 420 + 69;
+const SEED = 420 + 69;
 const NOISE = new Noise(SEED);
 
 let perlinNoise2DCache = new Map();

@@ -1,11 +1,20 @@
-import { system, Vector3, world } from "@minecraft/server";
+import { Player, system, Vector3, world } from "@minecraft/server";
 import { managePlayer } from "./worldgen/generation";
 import { registerBiomes } from "./worldgen/biomes";
+import { configure} from "./worldgen/config";
 
 
 registerBiomes();
 
 export let mainLocation: Vector3;
+
+system.afterEvents.scriptEventReceive.subscribe((event) => {
+    switch (event.id) {
+        case "wge:config": {
+            configure(event.sourceEntity as Player).then(() => {world.sendMessage("Updated Configuration!")});
+        }
+    }
+})
 
 
 system.runInterval(() => {

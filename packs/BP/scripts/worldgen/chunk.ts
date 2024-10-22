@@ -1,11 +1,20 @@
-import { Dimension, Player, Vector2, world } from "@minecraft/server";
-import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./Vec";
+import { Dimension, Vector2 } from "@minecraft/server";
+import { Vec2, Vec3 } from "./Vec";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
-import {bailGeneration, removeChunk, visitedChunks } from "./generation";
-export const CHUNK_RANGE = 6;
-export const SUBCHUNK_SIZE = 16;
+import {bailGeneration, removeChunk } from "./generation";
+export let CHUNK_RANGE = 6;
+export let SUBCHUNK_SIZE = 16;
+
+export function setChunkRange(val: number) {
+    CHUNK_RANGE = val;
+}
+
+export function setSubchunkSize(val: number) {
+    SUBCHUNK_SIZE = val;
+}
+
 
 export class ChunkPosition {
     x: number;

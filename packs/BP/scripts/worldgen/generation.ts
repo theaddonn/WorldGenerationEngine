@@ -2,10 +2,13 @@ import { Dimension, Player, Vector2, world } from "@minecraft/server";
 import { buildChunk, CHUNK_RANGE, ChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
-import { idx2D } from "./util";
 
 export let visitedChunks = new Set<String>();
-export const MAX_BUILDING_CHUNKS = 100;
+export let MAX_BUILDING_CHUNKS = 100;
+
+export function setMaxBuildingChunks(val: number) {
+    MAX_BUILDING_CHUNKS = val;
+}
 export let currentChunkBuildCount = 0;
 
 export function removeChunk() {
