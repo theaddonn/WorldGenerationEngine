@@ -112,7 +112,7 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
                 const position = samplePositions[idx];
                 let height;
                 if (ChunkPosition.fromWorld(position) !== pos) {
-                    height = pollNoise2D(position)[0];
+                    height = pollNoise2D(position);
                 } else {
                     height = noise.get(position.toLocalChunk());
                 }

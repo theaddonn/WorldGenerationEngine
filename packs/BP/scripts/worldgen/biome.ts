@@ -5,9 +5,9 @@ import { Vec3 } from "./Vec";
 import { HEIGHT_MAX } from "./ChunkNoiseProvider";
 
 export enum ClimateSelections {
-    FROZEN = 0.1,
-    COLD = 0.35,
-    NORMAL = 0.6,
+    FROZEN = -0.8,
+    COLD = -0.4,
+    NORMAL = 0.3,
     WARM = 0.75,
     BOILING = 1.0,
     DONT_CARE = 2.0
@@ -16,7 +16,7 @@ export enum ClimateSelections {
 export enum HeightBias {
     LOW = 0.3, // Means it must be between the bottom of the noise and 1 third the way up the terrain
     NORMAL = 0.6, // Means it must be between the bottom third and the top 6th
-    HIGH = .65, // Means it must be between the top 6th and the top of the noise 
+    HIGH = .63, // Means it must be between the top 6th and the top of the noise 
     REALLY_HIGH = 1.
 }
 

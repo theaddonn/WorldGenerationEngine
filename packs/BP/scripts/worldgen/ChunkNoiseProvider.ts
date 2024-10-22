@@ -1,7 +1,7 @@
 import { Vector2, Vector3, world } from "@minecraft/server";
 import { Chunk, ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { idx2D } from "./util";
-import { PerlinNoise2D, singlePerlin2D } from "./noise";
+import { PerlinNoise2D, pollClimateNoise2D, pollMoistureNoise2D, pollTieNoise2D, singlePerlin2D } from "./noise";
 import { Vec2, Vector2ToString } from "./Vec";
 import { BlockPosition } from "./block";
 import { biomeManager } from "./biome";
@@ -62,12 +62,16 @@ class ChunkNoise {
 
 class ChunkNoiseProvider {
     chunkHeightmap: Map<String, ChunkNoise>;
-    heightCache: Map<String, Float32Array>;
+    climateCache: Map<String, Float32Array>;
+    tieCache: Map<String, Float32Array>;
+    moistureCache: Map<String, Float32Array>;
     amplitudeConstant: number; // This is a little hacky but works :33333
 
     constructor() {
         this.chunkHeightmap = new Map();
-        this.heightCache = new Map();
+        this.climateCache = new Map();
+        this.tieCache = new Map();
+        this.moistureCache = new Map();
 
         let overall = AMPLITUDE;
         let last = AMPLITUDE;
@@ -106,30 +110,32 @@ class ChunkNoiseProvider {
         let tieBreakerNoise = new Float32Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
         let climateNoise = new Float32Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
         let heightmap = new Int16Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
-
+        let moistureMap = new Float32Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
+    
         const base = BlockPosition.fromChunk(pos);
-        let { largest, smallest } = this.populateHeightmapAndNoise(base, heightmap, tieBreakerNoise);
+        let { largest, smallest } = this.populateHeightNoise(base, heightmap, tieBreakerNoise);
 
+        this.populateTieNoise(base, tieBreakerNoise);
         this.populateClimateNoise(base, climateNoise);
-
+        this.populateMoistureNoise(base, moistureMap);
+        
         const finalizedBiomeData = this.generateBiomeData(heightmap, climateNoise, tieBreakerNoise);
 
         this.checkHeightExtremes(largest, smallest);
 
         return { largest, heightmap, biomemap: finalizedBiomeData };
     }
-
-    private populateHeightmapAndNoise(base: Vector2, heightmap: Int16Array, tieBreakerNoise: Float32Array) {
+    
+    private populateHeightNoise(base: Vector2, heightmap: Int16Array, tieBreakerNoise: Float32Array) {
         let largest = -21213890;
         let smallest = 13721987938;
 
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
                 const real = new Vec2(x + base.x, z + base.y);
-                const [height, raw] = pollNoise2D(real);
+                const height = pollNoise2D(real);
                 const index = idx2D(new Vec2(x, z));
-
-                tieBreakerNoise[index] = raw;
+    
                 heightmap[index] = height;
 
                 if (height > largest) largest = height;
@@ -143,21 +149,80 @@ class ChunkNoiseProvider {
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
                 const index = idx2D(new Vec2(x, z));
-                climateNoise[index] = singlePerlin2D(base.x + x, base.y + z, 0.00075);
+                climateNoise[index] = pollClimateNoise2D(base.x + x, base.y + z, 0.00095);
             }
         }
-        this.heightCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), climateNoise);
+        this.climateCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), climateNoise);
     }
-
+    
+    private populateTieNoise(base: Vector2, tieNoise: Float32Array) {
+        for (let x = 0; x < SUBCHUNK_SIZE; x++) {
+            for (let z = 0; z < SUBCHUNK_SIZE; z++) {
+                const index = idx2D(new Vec2(x, z));
+                tieNoise[index] = pollTieNoise2D(base.x + x, base.y + z, 0.005);
+            }
+        }
+        this.tieCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), tieNoise);
+    }
+    private populateMoistureNoise(base: Vector2, moistureNoise: Float32Array) {
+        for (let x = 0; x < SUBCHUNK_SIZE; x++) {
+            for (let z = 0; z < SUBCHUNK_SIZE; z++) {
+                const index = idx2D(new Vec2(x, z));
+                moistureNoise[index] = pollMoistureNoise2D(base.x + x, base.y + z, 0.01);
+            }
+        }
+        this.moistureCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), moistureNoise);
+    }
+    
     getClimateNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
-        const cache = this.heightCache.get(Vector2ToString(Chunk));
+
+        const cache = this.climateCache.get(Vector2ToString(Chunk));
         if (cache === undefined) {
             return 0.5;
         } else {
             return cache[idx2D(Local)];
         }
     }
+    getClimateNoiseFull(fullPos: Vector3): number {
+        const chunkPos = ChunkPosition.fromWorld({x: fullPos.x, y: fullPos.z});
+        const local = LocalChunkPosition.fromWorld({x: fullPos.x, y: fullPos.z});
+        return this.getClimateNoise(chunkPos, local);
 
+    }
+    
+    getMoistureNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
+
+        const cache = this.moistureCache.get(Vector2ToString(Chunk));
+        if (cache === undefined) {
+            return 0.5;
+        } else {
+            return cache[idx2D(Local)];
+        }
+
+    }
+    getMoistureNoiseFull(fullPos: Vector3): number {
+        const chunkPos = ChunkPosition.fromWorld({x: fullPos.x, y: fullPos.z});
+        const local = LocalChunkPosition.fromWorld({x: fullPos.x, y: fullPos.z});
+        return this.getMoistureNoise(chunkPos, local);
+
+    }
+
+    getTieBreakerNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
+
+        const cache = this.tieCache.get(Vector2ToString(Chunk));
+        if (cache === undefined) {
+            return 0.5;
+        } else {
+            return cache[idx2D(Local)];
+        }
+
+    }
+    getTieBreakerNoiseFull(fullPos: Vector3): number {
+        const chunkPos = ChunkPosition.fromWorld({x: fullPos.x, y: fullPos.z});
+        const local = LocalChunkPosition.fromWorld({x: fullPos.x, y: fullPos.z});
+        return this.getTieBreakerNoise(chunkPos, local);
+    }
+    
     private generateBiomeData(
         heightmap: Int16Array,
         climateNoise: Float32Array,
@@ -204,10 +269,10 @@ class ChunkNoiseProvider {
     }
 }
 
-export function pollNoise2D(pos: Vector2): number[] {
-    let [height, raw] = PerlinNoise2D(pos.x, pos.y, AMPLITUDE, FREQUENCY, OCTAVE_2D, PERSISTANCE, 1.7, 1.0);
+export function pollNoise2D(pos: Vector2): number {
+    let height = PerlinNoise2D(pos.x, pos.y, AMPLITUDE, FREQUENCY, OCTAVE_2D, PERSISTANCE, 1.7, 1.0)[0];
     height += BASE_OFFSET;
-    return [height, raw];
+    return height
 }
 
 export let chunkNoiseProvider = new ChunkNoiseProvider();

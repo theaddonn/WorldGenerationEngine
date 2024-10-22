@@ -1,7 +1,8 @@
-import { Dimension, Player, Vector2, world } from "@minecraft/server";
-import { buildChunk, CHUNK_RANGE, ChunkPosition, SUBCHUNK_SIZE } from "./chunk";
+import { Dimension, Player, Vector2 } from "@minecraft/server";
+import { buildChunk, CHUNK_RANGE, ChunkPosition, } from "./chunk";
 import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
+import { debug } from "./debug";
 
 export let visitedChunks = new Set<String>();
 export let MAX_BUILDING_CHUNKS = 100;
@@ -13,6 +14,11 @@ export let currentChunkBuildCount = 0;
 
 export function removeChunk() {
     currentChunkBuildCount--;
+
+    for (; currentChunkBuildCount < 0; currentChunkBuildCount++) {}
+}
+export function addChunk() {
+    currentChunkBuildCount++;
 }
 
 export function bailGeneration(pos: Vector2) {
@@ -21,13 +27,14 @@ export function bailGeneration(pos: Vector2) {
 }
 
 function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
+    debug.update(`Queue out of ${MAX_BUILDING_CHUNKS}`, currentChunkBuildCount);
     if (visitedChunks.has(Vector2ToString(pos))) {
         return;
     }
     if (currentChunkBuildCount >= MAX_BUILDING_CHUNKS) {
         return;
     }
-    currentChunkBuildCount++;
+    addChunk();
 
     visitedChunks.add(Vector2ToString(pos));
 
