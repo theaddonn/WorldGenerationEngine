@@ -1,5 +1,5 @@
 import { Dimension, world } from "@minecraft/server";
-import { Biome, biomeManager, ClimateSelections, HeightBias } from "./biome";
+import { Biome, biomeManager, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
 import { Vec3 } from "./Vec";
 const TALL_THRESHHOLD = 0.96;
 const GRASS_THRESHHOLD = 0.86;
@@ -19,6 +19,7 @@ class Planes extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.NORMAL;
         this.heightBias = HeightBias.NORMAL;
+        this.moistureBias = MoistureSelections.Normal;
     }
 
     decorate(pos: Vec3, dim: Dimension) {
@@ -43,6 +44,7 @@ class FrozenPlanes extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
         this.heightBias = HeightBias.NORMAL;
+        this.moistureBias = MoistureSelections.Wet
     }
 
     decorate(pos: Vec3, dim: Dimension) {
@@ -67,6 +69,7 @@ class Desert extends Biome {
         this.surfaceDepth = 3;
         this.tempBias = ClimateSelections.WARM;
         this.heightBias = HeightBias.NORMAL;
+        this.moistureBias = MoistureSelections.Dry;
     }
 
     
@@ -90,8 +93,9 @@ class Mountian extends Biome {
         this.surfaceNeedsSupport = false;
         this.multiLayerSurface = false;
         this.surfaceDepth = 0;
-        this.tempBias = ClimateSelections.DONT_CARE;
+        this.tempBias = ClimateSelections.NORMAL;
         this.heightBias = HeightBias.REALLY_HIGH;
+        this.moistureBias = MoistureSelections.Normal
     }
 
     
@@ -111,6 +115,7 @@ class FrozenMountian extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
         this.heightBias = HeightBias.REALLY_HIGH;
+        this.moistureBias = MoistureSelections.Wet
     }
 
     
@@ -135,6 +140,7 @@ class SandMountian extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.WARM;
         this.heightBias = HeightBias.HIGH;
+        this.moistureBias = MoistureSelections.Dry;
     }
 
     
@@ -154,6 +160,7 @@ class SandMountianTall extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.WARM;
         this.heightBias = HeightBias.REALLY_HIGH;
+        this.moistureBias = MoistureSelections.Dry;
     }
 
     

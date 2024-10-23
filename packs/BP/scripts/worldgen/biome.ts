@@ -12,11 +12,19 @@ export enum ClimateSelections {
     BOILING = 1.0,
     DONT_CARE = 2.0
 }
+export enum MoistureSelections {
+    Soaking = -0.8,
+    Wet = -0.4,
+    Normal = 0.5,
+    Dry = 0.75,
+    None = 1.0,
+    DONT_CARE = 2.0
+}   
 
 export enum HeightBias {
     LOW = 0.3, // Means it must be between the bottom of the noise and 1 third the way up the terrain
     NORMAL = 0.6, // Means it must be between the bottom third and the top 6th
-    HIGH = .63, // Means it must be between the top 6th and the top of the noise 
+    HIGH = .66, // Means it must be between the top 6th and the top of the noise 
     REALLY_HIGH = 1.
 }
 
@@ -31,7 +39,8 @@ export abstract class Biome {
     multiLayerSurface: boolean;
     surfaceDepth: number;
     heightBias: HeightBias;
-    tempBias: ClimateSelections;
+    tempBias: number;
+    moistureBias: number;
 
 
     abstract decorate(pos: Vec3, dim: Dimension): void;
@@ -57,20 +66,6 @@ class BiomeList {
         this.biomes.push(biome);
     }
 
-    private getClimate(raw: number): ClimateSelections {
-        if (raw <= ClimateSelections.FROZEN) {
-            return ClimateSelections.FROZEN;
-        } else if (raw <= ClimateSelections.COLD) {
-            return ClimateSelections.COLD;
-        } else if (raw <= ClimateSelections.NORMAL){
-            return ClimateSelections.NORMAL;
-        } else if (raw <= ClimateSelections.WARM) {
-            return ClimateSelections.WARM;
-        } else {
-            return ClimateSelections.BOILING;
-        }
-
-    }
 
     private getHeight(raw: number): HeightBias {
         if (raw <= HEIGHT_MAX * HeightBias.LOW) {
@@ -83,46 +78,17 @@ class BiomeList {
             return HeightBias.REALLY_HIGH
         }
     }
-    private findClosestClimate(target: ClimateSelections): ClimateSelections {
-        const fallbackOrder = {
-            [ClimateSelections.FROZEN]: [ClimateSelections.COLD, ClimateSelections.NORMAL],
-            [ClimateSelections.COLD]: [ClimateSelections.NORMAL, ClimateSelections.WARM],
-            [ClimateSelections.NORMAL]: [ClimateSelections.WARM, ClimateSelections.COLD],
-            [ClimateSelections.WARM]: [ClimateSelections.NORMAL, ClimateSelections.COLD],
-            [ClimateSelections.BOILING]: [ClimateSelections.WARM, ClimateSelections.NORMAL],
-        };
-        return fallbackOrder[target]?.find(climate =>
-            this.biomes.some(b => b.tempBias === climate)
-        ) || target;
-    }
     
-    private findClosestHeight(target: HeightBias): HeightBias {
-        const fallbackOrder = {
-            [HeightBias.LOW]: [HeightBias.NORMAL, HeightBias.HIGH],
-            [HeightBias.NORMAL]: [HeightBias.LOW, HeightBias.HIGH],
-            [HeightBias.HIGH]: [HeightBias.NORMAL, HeightBias.LOW],
-            [HeightBias.REALLY_HIGH]: [HeightBias.HIGH, HeightBias.NORMAL],
-        };
-        return fallbackOrder[target]?.find(height =>
-            this.biomes.some(b => b.heightBias === height)
-        ) || target;
-    }
     
 
-    getBiomeIndexNew(climate: number, height: number, tieBreaker: number): number {
-        const currentClimate = this.getClimate(climate);
+    getBiomeIndexNew(climate: number, height: number, tieBreaker: number, moisture: number): number {
         const currentHeight = this.getHeight(height);
         tieBreaker = clamp(tieBreaker, 0, 1);
     
-        let possibleBiomes = this.getFilteredBiomes(currentClimate, currentHeight);
-    
+        let possibleBiomes = this.getFilteredBiomes(climate, currentHeight, moisture);
+        // world.sendMessage(`${possibleBiomes.length} ${possibleBiomes[0]}`)
         if (possibleBiomes.length === 1) {
-            return possibleBiomes[0].index;
-        }
-    
-        possibleBiomes = this.removeDontCareBiomes(possibleBiomes);
-        if (possibleBiomes.length === 1) {
-            return possibleBiomes[0].index;
+            return possibleBiomes[0];
         }
     
         const selected = Math.min(
@@ -130,74 +96,64 @@ class BiomeList {
             possibleBiomes.length - 1
         );
     
-        return possibleBiomes[selected].index;
+        return possibleBiomes[selected];
     }
     
-    private getFilteredBiomes(currentClimate: number, currentHeight: number): { biome: any, index: number }[] {
-        let possibleBiomes = this.filterBiomesByClimateAndHeight(currentClimate, currentHeight);
-    
-        if (possibleBiomes.length === 0) {
-            const fallbackHeight = this.findClosestHeight(currentHeight);
-            possibleBiomes = this.filterBiomesWithFallbackHeight(currentClimate, fallbackHeight);
-        }
+    private getFilteredBiomes(currentClimate: number, currentHeight: number, currentMoisture: number): number[] {
+        const errMargin = 0.01;
 
-        if (possibleBiomes.length === 0) {
-            const fallbackClimate = this.findClosestClimate(currentClimate);
-            possibleBiomes = this.filterBiomesWithFallbackClimate(fallbackClimate, currentHeight);
-        }
+        let biomeDistances: {index: number, distance: number }[] = new Array();
+
+        this.biomes.forEach((biome, index) => {
+            let distance = this.computeBiomeDistance(biome, currentClimate, currentHeight, currentMoisture);
+            biomeDistances.push({index: index, distance: distance});
+        })
+        
+        let bestDistance = 2109830921830921830912893012890321.88787787878;
+        biomeDistances.sort((a, b) => {return a.distance - b.distance});
+        
+        bestDistance = biomeDistances[0].distance;
+
+        // world.sendMessage(`NEW`)
+
+        // for (const distance of biomeDistances) {
+        //     world.sendMessage(`${distance.distance} ${distance.index} ${this.biomes[distance.index].id}`)
+        // }
+        // world.sendMessage(` BEST ${bestDistance}`)
+
+        let withinMargin: number[] = new Array();
+        withinMargin.push(biomeDistances[0].index);
+
+
+        // for (const obj of biomeDistances) {
+        //     if (obj.distance == bestDistance) {
+        //         withinMargin.push(obj.index);
+        //     } else if (obj.distance - errMargin < bestDistance) {
+        //         withinMargin.push(obj.index);
+        //     }
+        // }
+
+        return withinMargin;
+    }
+
     
-        if (possibleBiomes.length === 0) {
-            const fallbackClimate = this.findClosestClimate(currentClimate);
-            const fallbackHeight = this.findClosestHeight(currentHeight);
-            possibleBiomes = this.filterBiomesWithBothFallbacks(fallbackClimate, fallbackHeight);
-        }
-    
-        return possibleBiomes;
+    //TODO: Add some form of weights for a future release
+
+    private computeBiomeDistance(biome: Biome, currentClimate: number, currentHeight: number, currentMoisture: number): number {
+
+        const heightWeight = 1.0;
+        const tempWeight = 1.0;
+        const moistureWeight = 1.0;
+
+
+        const tempDistance = tempWeight * (currentClimate - biome.tempBias)
+        const moistureDistance = moistureWeight* (currentMoisture - biome.moistureBias);
+
+        const heightDistance = heightWeight* (currentHeight - biome.heightBias);
+        // world.sendMessage(`${heightDistance} ${currentHeight} ${biome.heightBias} ${biome.id} ${tempDistance} ${moistureDistance}`)
+        return tempDistance ** 2 + moistureDistance ** 2 + heightDistance ** 2;
     }
     
-    private filterBiomesByClimateAndHeight(currentClimate: number, currentHeight: number) {
-        return this.biomes
-            .map((biome, index) => ({ biome, index }))
-            .filter(ele => 
-                (ele.biome.tempBias === ClimateSelections.DONT_CARE || 
-                 ele.biome.tempBias === currentClimate) &&
-                ele.biome.heightBias === currentHeight
-            );
-    }
-    
-    private filterBiomesWithFallbackClimate(fallbackClimate: number, height: number) {
-        return this.biomes
-            .map((biome, index) => ({ biome, index }))
-            .filter(ele =>
-                (ele.biome.tempBias === ClimateSelections.DONT_CARE || 
-                 ele.biome.tempBias === fallbackClimate) &&
-                ele.biome.heightBias === height
-            );
-    }
-    
-    private filterBiomesWithFallbackHeight(climate: number, fallbackHeight: number) {
-        return this.biomes
-            .map((biome, index) => ({ biome, index }))
-            .filter(ele =>
-                (ele.biome.tempBias === ClimateSelections.DONT_CARE || 
-                 ele.biome.tempBias === climate) &&
-                ele.biome.heightBias === fallbackHeight
-            );
-    }
-    
-    private filterBiomesWithBothFallbacks(fallbackClimate: number, fallbackHeight: number) {
-        return this.biomes
-            .map((biome, index) => ({ biome, index }))
-            .filter(ele =>
-                (ele.biome.tempBias === ClimateSelections.DONT_CARE || 
-                 ele.biome.tempBias === fallbackClimate) &&
-                ele.biome.heightBias === fallbackHeight
-            );
-    }
-    
-    private removeDontCareBiomes(possibleBiomes: { biome: any, index: number }[]) {
-        return possibleBiomes.filter(obj => obj.biome.tempBias !== ClimateSelections.DONT_CARE);
-    }
     
 
     getBiomeIndex(value: number): number {

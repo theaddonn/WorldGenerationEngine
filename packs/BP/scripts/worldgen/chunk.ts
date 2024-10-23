@@ -4,7 +4,7 @@ import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
 import {advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
-export let CHUNK_RANGE = 6;
+export let CHUNK_RANGE = 1;
 export let SUBCHUNK_SIZE = 16;
 
 export function setChunkRange(val: number) {
