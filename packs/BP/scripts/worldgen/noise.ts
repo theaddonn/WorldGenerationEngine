@@ -1,4 +1,3 @@
-import { world } from "@minecraft/server";
 import Noise from "noise-ts";
 
 const seed = 0x80081E5 + 0xA55;
@@ -13,18 +12,6 @@ const climateNoise = new Noise(climateSeed);
 const tieSeed = 0x321DDDE+ 0xEEE1239a;
 const tieNoise = new Noise(tieSeed);
 
-function hashStr(str: string) {
-    var hash = 0,
-        i,
-        chr;
-    if (str.length === 0) return hash;
-    for (i = 0; i < str.length; i++) {
-        chr = str.charCodeAt(i);
-        hash = (hash << 5) - hash + chr;
-        hash |= 0; // Convert to 32bit integer
-    }
-    return hash;
-}
 
 function PerlinNoise2DRaw(
     x: number,

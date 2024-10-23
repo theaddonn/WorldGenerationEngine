@@ -1,10 +1,9 @@
-import { Dimension, Player, Vector2 } from "@minecraft/server";
+import { Dimension, Player, Vector2, world } from "@minecraft/server";
 import { buildChunk, CHUNK_RANGE, ChunkPosition, } from "./chunk";
 import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
 import { debug } from "./debug";
 
-export let visitedChunks = new Set<String>();
 export let MAX_BUILDING_CHUNKS = 100;
 
 export function setMaxBuildingChunks(val: number) {
@@ -17,28 +16,64 @@ export function removeChunk() {
 
     for (; currentChunkBuildCount < 0; currentChunkBuildCount++) {}
 }
-export function addChunk() {
+export function addWorkingChunk(pos: ChunkPosition) {
+    workingChunks.add(Vector2ToString(pos));
     currentChunkBuildCount++;
 }
 
 export function bailGeneration(pos: Vector2) {
     removeChunk();
-    visitedChunks.delete(Vector2ToString(pos));
+    workingChunks.delete(Vector2ToString(pos));
 }
+
+export enum ChunkStage {
+    None = 0,
+    BaseLayer,
+    DownStack,
+    Decorate,
+    Finished
+}
+export let visitedChunks = new Map<String, ChunkStage>();
+export let workingChunks = new Set<String>();
+
+export function advanceStage(position: ChunkPosition, stage: ChunkStage): ChunkStage {
+    stage++;
+    visitedChunks.set(Vector2ToString(position), stage);
+    return stage;
+}
+
+export function finishChunk(pos: ChunkPosition, state: ChunkStage) {
+    if (state+1 !== ChunkStage.Finished) {
+        world.sendMessage(`Stage when finished doesnt equal finished ${state} ${ChunkStage.Finished}`);
+    }
+    advanceStage(pos, state)
+    workingChunks.delete(Vector2ToString(pos));
+    removeChunk();
+}
+
 
 function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
     debug.update(`Queue out of ${MAX_BUILDING_CHUNKS}`, currentChunkBuildCount);
-    if (visitedChunks.has(Vector2ToString(pos))) {
+    if (workingChunks.has(Vector2ToString(pos))) {
         return;
     }
     if (currentChunkBuildCount >= MAX_BUILDING_CHUNKS) {
         return;
     }
-    addChunk();
 
-    visitedChunks.add(Vector2ToString(pos));
+    let visitState = visitedChunks.get(Vector2ToString(pos));
+    if (visitState === undefined) {
+        visitState = ChunkStage.None
+    }
+    if (visitState === ChunkStage.Finished) {
+        return;
+    }
 
-    runJob(buildChunk(pos, dim));
+
+
+    addWorkingChunk(pos);
+
+    runJob(buildChunk(pos, dim, visitState));
 }
 
 export function managePlayer(player: Player, dim: Dimension) {

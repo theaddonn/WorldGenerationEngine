@@ -1,4 +1,4 @@
-import { Vector2, Vector3 } from "@minecraft/server";
+import { Vector2, Vector3, world } from "@minecraft/server";
 import { SUBCHUNK_SIZE } from "./chunk";
 
 export class Vec2 {
@@ -8,6 +8,15 @@ export class Vec2 {
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
+    }
+
+    static fromStr(data: String): Vec2 {
+
+        const parts = data.split(" ");
+        const x = parseFloat(parts[0]);
+        const y = parseFloat(parts[1])
+        return new Vec2(x, y);
+
     }
 }
 

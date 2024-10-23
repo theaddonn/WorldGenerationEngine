@@ -1,9 +1,9 @@
-import { Dimension, Vector2 } from "@minecraft/server";
-import { Vec2, Vec3 } from "./Vec";
+import { Dimension, Vector2, world } from "@minecraft/server";
+import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
-import {bailGeneration, removeChunk } from "./generation";
+import {advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
 export let CHUNK_RANGE = 6;
 export let SUBCHUNK_SIZE = 16;
 
@@ -140,47 +140,57 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
     }
 }
 
-export function* buildChunk(pos: ChunkPosition, dim: Dimension) {
+export function* buildChunk(pos: ChunkPosition, dim: Dimension, stage: ChunkStage) {
     chunkNoiseProvider.getOrCacheChunkHeight(pos);
     yield;
 
-    for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        const surfaceDepth = biomeManager.surfaceOffset(biome);
-        try {
-            if (biomeManager.multiLayerSurface(biome)) {
-                for (let x = 0; x < surfaceDepth; x++) {
-                    dim.setBlockType({ x: world.x, y: val - x, z: world.y }, biomeManager.surface(biome));
+    if (stage === ChunkStage.None) {
+        for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+            const surfaceDepth = biomeManager.surfaceOffset(biome);
+            try {
+                if (biomeManager.multiLayerSurface(biome)) {
+                    for (let x = 0; x < surfaceDepth; x++) {
+                        dim.setBlockType({ x: world.x, y: val - x, z: world.y }, biomeManager.surface(biome));
+                    }
+                } else {
+                    dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
                 }
-            } else {
-                dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
+        
+                if (biomeManager.support(biome)) {
+                    dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
+                }
+            } catch {
+                bailGeneration(pos);
+                return;
             }
+        }
+        stage = advanceStage(pos, stage);
+        yield;
+    }
     
-            if (biomeManager.support(biome)) {
-                dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
+    if (stage === ChunkStage.BaseLayer) {
+        try {
+            for (const e of downStack(pos, dim)) {
+                yield;
             }
         } catch {
             bailGeneration(pos);
-            return;
         }
-    }
-    yield;
-    
-    try {
-        for (const e of downStack(pos, dim)) {
-            yield;
-        }
-    } catch {
-        bailGeneration(pos);
+        stage = advanceStage(pos, stage);
+        yield;
     }
 
-    yield;
-    let lastX = -1;
-    for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {return bailGeneration(pos);}
-        if (lastX != world.x) {
-            yield;
+        
+    if (stage === ChunkStage.DownStack) {
+        let lastX = -1;
+        for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+            try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {return bailGeneration(pos);}
+            if (lastX != world.x) {
+                yield;
+            }
+            lastX = world.x;
         }
-        lastX = world.x;
+        stage++; // This is a hack it is evil
     }
-    removeChunk();
+    finishChunk(pos, stage);
 }

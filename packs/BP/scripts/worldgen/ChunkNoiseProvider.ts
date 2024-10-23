@@ -1,11 +1,11 @@
-import { Vector2, Vector3, world } from "@minecraft/server";
+import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
 import { Chunk, ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { idx2D } from "./util";
 import { PerlinNoise2D, pollClimateNoise2D, pollMoistureNoise2D, pollTieNoise2D, singlePerlin2D } from "./noise";
-import { Vec2, Vector2ToString } from "./Vec";
-import { BlockPosition } from "./block";
+import { Vec2, Vector2ToString, Vector3ToString } from "./Vec";
+import { BlockPosition, chunkAndYToLocation } from "./block";
 import { biomeManager } from "./biome";
-import { mainLocation } from "../main";
+import { mainLocation, renderDebug } from "../main";
 
 export let OCTAVE_2D = 5;
 export let AMPLITUDE = 50;
@@ -65,7 +65,6 @@ class ChunkNoiseProvider {
     climateCache: Map<String, Float32Array>;
     tieCache: Map<String, Float32Array>;
     moistureCache: Map<String, Float32Array>;
-    amplitudeConstant: number; // This is a little hacky but works :33333
 
     constructor() {
         this.chunkHeightmap = new Map();
@@ -73,14 +72,6 @@ class ChunkNoiseProvider {
         this.tieCache = new Map();
         this.moistureCache = new Map();
 
-        let overall = AMPLITUDE;
-        let last = AMPLITUDE;
-
-        for (let x = 0; x < OCTAVE_2D; x++) {
-            last *= PERSISTANCE;
-            overall += last;
-        }
-        this.amplitudeConstant = overall;
     }
 
     *getChunkHeightMap(pos: Vector2): Generator<number> {
@@ -119,7 +110,7 @@ class ChunkNoiseProvider {
         this.populateClimateNoise(base, climateNoise);
         this.populateMoistureNoise(base, moistureMap);
         
-        const finalizedBiomeData = this.generateBiomeData(heightmap, climateNoise, tieBreakerNoise);
+        const finalizedBiomeData = this.generateBiomeData(heightmap, climateNoise, tieBreakerNoise, moistureMap);
 
         this.checkHeightExtremes(largest, smallest);
 
@@ -168,7 +159,7 @@ class ChunkNoiseProvider {
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
                 const index = idx2D(new Vec2(x, z));
-                moistureNoise[index] = pollMoistureNoise2D(base.x + x, base.y + z, 0.01);
+                moistureNoise[index] = pollMoistureNoise2D(base.x + x, base.y + z, 0.001);
             }
         }
         this.moistureCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), moistureNoise);
@@ -226,7 +217,8 @@ class ChunkNoiseProvider {
     private generateBiomeData(
         heightmap: Int16Array,
         climateNoise: Float32Array,
-        tieBreakerNoise: Float32Array
+        tieBreakerNoise: Float32Array,
+        moistureNoise: Float32Array
     ): Int16Array {
         let biomeData = new Int16Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
 
@@ -236,7 +228,8 @@ class ChunkNoiseProvider {
                 biomeData[index] = biomeManager.getBiomeIndexNew(
                     climateNoise[index],
                     heightmap[index],
-                    tieBreakerNoise[index]
+                    tieBreakerNoise[index],
+                    moistureNoise[index]
                 );
             }
         }
@@ -266,6 +259,59 @@ class ChunkNoiseProvider {
             this.chunkHeightmap.set(Vector2ToString(pos), noise);
             return noise;
         }
+    }
+
+
+    *dropUselessInfo(pos: ChunkPosition, keepPercent: number = 0.10, dim: Dimension) {
+        let positionArray = new Array<Vec2>(this.chunkHeightmap.size);
+
+        const keepReal = Math.ceil(this.chunkHeightmap.size * keepPercent);
+
+        let idx = 0;
+        for (const pos of this.chunkHeightmap.keys())   {
+            positionArray[idx++] = Vec2.fromStr(pos);
+            yield;
+        } 
+
+        positionArray.sort((a, b) => {
+            let aDist = pos.distance(a);
+            let bDist = pos.distance(b);
+            return aDist - bDist;
+        });
+        yield;
+
+        const deadArray = positionArray.slice(keepReal);
+
+
+        for (const localPos of deadArray) {
+            const strKey = Vector2ToString(localPos);
+            this.chunkHeightmap.delete(strKey);
+            this.climateCache.delete(strKey);
+            this.tieCache.delete(strKey);
+            this.moistureCache.delete(strKey);
+            if (renderDebug) {
+                try {
+                    dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "bedrock");
+                } catch {
+                }
+            }
+            yield;
+        }
+
+        const aliveArray = positionArray.slice(0, keepReal);
+
+
+        if (renderDebug) {
+            for (const localPos of aliveArray) {
+            
+                try {
+                    dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "grass");
+                } catch {
+                }
+                yield;
+            }
+        }
+
     }
 }
 
