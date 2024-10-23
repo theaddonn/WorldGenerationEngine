@@ -291,7 +291,7 @@ class ChunkNoiseProvider {
             this.moistureCache.delete(strKey);
             if (renderDebug) {
                 try {
-                    dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "bedrock");
+                    //dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "bedrock");
                 } catch {
                 }
             }
@@ -305,7 +305,7 @@ class ChunkNoiseProvider {
             for (const localPos of aliveArray) {
             
                 try {
-                    dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "grass");
+                    //dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "grass");
                 } catch {
                 }
                 yield;

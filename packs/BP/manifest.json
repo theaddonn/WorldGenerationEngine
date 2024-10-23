@@ -5,7 +5,7 @@
         "description": "World Generation Engine",
         "uuid": "88d19ed8-0bdb-4b1e-b1f6-30269e8d2504",
         "version": [1, 0, 0],
-        "min_engine_version": [1, 21, 30]
+        "min_engine_version": [1, 21, 41]
     },
     "modules": [
         {
