@@ -3,10 +3,10 @@ import { managePlayer, visitedChunks, workingChunks } from "./worldgen/generatio
 import { registerBiomes } from "./worldgen/biomes";
 import { configure} from "./worldgen/config";
 import { chunkNoiseProvider } from "./worldgen/ChunkNoiseProvider";
-import { debug, manageDebugPlayer } from "./worldgen/debug";
+import { manageDebugPlayer } from "./worldgen/debug";
 import { ChunkPosition } from "./worldgen/chunk";
 import { runJob } from "./job";
-import { Vec2, Vector2ToString } from "./worldgen/Vec";
+import { Vec2 } from "./worldgen/Vec";
 
 
 registerBiomes();
