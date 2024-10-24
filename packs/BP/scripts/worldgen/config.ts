@@ -1,9 +1,9 @@
 import { ModalFormData } from "@minecraft/server-ui";
 import { MAX_BUILDING_CHUNKS, setMaxBuildingChunks } from "./generation";
-import { CHUNK_RANGE, SUBCHUNK_SIZE, setChunkRange, setSubchunkSize } from "./chunk";
+import { CHUNK_RANGE, setChunkRange } from "./chunk";
 import { AMPLITUDE, BASE_OFFSET, FREQUENCY, OCTAVE_2D, PERSISTANCE, setAmplitude, setOctave2D, setPersistance, setBaseOffset, setFrequency } from "./ChunkNoiseProvider";
-import { Player, world } from "@minecraft/server";
-import { RenderDebug, renderDebug, ShowCacheSizes, showCacheSizes } from "../main";
+import { Player } from "@minecraft/server";
+import { RenderDebug, renderDebug, ShowCacheSizes, showCacheSizes } from "./debug";
 
 const MULTIPLY_CONSTANT = 10000
 

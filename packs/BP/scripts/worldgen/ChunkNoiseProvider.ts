@@ -2,10 +2,9 @@ import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
 import { Chunk, ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { idx2D } from "./util";
 import { PerlinNoise2D, pollClimateNoise2D, pollMoistureNoise2D, pollTieNoise2D, singlePerlin2D } from "./noise";
-import { Vec2, Vector2ToString, Vector3ToString } from "./Vec";
-import { BlockPosition, chunkAndYToLocation } from "./block";
+import { Vec2, Vector2ToString } from "./Vec";
+import { BlockPosition } from "./block";
 import { biomeManager } from "./biome";
-import { mainLocation, renderDebug } from "../main";
 
 export let OCTAVE_2D = 5;
 export let AMPLITUDE = 50;

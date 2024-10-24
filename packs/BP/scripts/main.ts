@@ -3,7 +3,7 @@ import { managePlayer, visitedChunks, workingChunks } from "./worldgen/generatio
 import { registerBiomes } from "./worldgen/biomes";
 import { configure} from "./worldgen/config";
 import { chunkNoiseProvider } from "./worldgen/ChunkNoiseProvider";
-import { debug } from "./worldgen/debug";
+import { debug, manageDebugPlayer } from "./worldgen/debug";
 import { ChunkPosition } from "./worldgen/chunk";
 import { runJob } from "./job";
 import { Vec2, Vector2ToString } from "./worldgen/Vec";
@@ -11,18 +11,6 @@ import { Vec2, Vector2ToString } from "./worldgen/Vec";
 
 registerBiomes();
 
-export let renderDebug = true;
-export let showCacheSizes = true;
-export function RenderDebug(val?: boolean) {
-    if (val === undefined) {
-        renderDebug = !renderDebug; 
-    }
-    renderDebug = val!;
-}
-
-export function ShowCacheSizes(show: boolean) {
-    showCacheSizes = show;
-}
 
 let dim = world.getDimension("overworld");
 
@@ -56,23 +44,6 @@ system.runInterval(() => {
     dim.getPlayers().forEach((player) => {
         mainLocation = player.location;
         managePlayer(player, dim);
-        if (renderDebug) {
-            debug.update("Location", `x: ${Math.floor(mainLocation.x)}, y: ${Math.floor(mainLocation.y)}, z: ${Math.floor(mainLocation.z)}`)
-                .update("Chunk Position", Vector2ToString(ChunkPosition.fromWorld(new Vec2(mainLocation.x, mainLocation.z))))
-                .update("Climate", `${chunkNoiseProvider.getClimateNoiseFull(mainLocation)}`)
-                .update("Tie Breaker", `${chunkNoiseProvider.getTieBreakerNoiseFull(mainLocation)}`)
-                .update("Moisture", `${chunkNoiseProvider.getMoistureNoiseFull(mainLocation)}`);
-            if (showCacheSizes) {
-                debug.update("World Cache Size", chunkNoiseProvider.chunkHeightmap.size)
-                    .update("Climate Cache Size", chunkNoiseProvider.climateCache.size)
-                    .update("Tie Breaker Cache Size", chunkNoiseProvider.tieCache.size)
-                    .update("Moisture Cache Size", chunkNoiseProvider.moistureCache.size)
-                    .update("Total Cache Size", chunkNoiseProvider.chunkHeightmap.size + chunkNoiseProvider.climateCache.size + chunkNoiseProvider.tieCache.size + chunkNoiseProvider.moistureCache.size)
-            }
-
-            dim.runCommandAsync(`titleraw ${player.name} clear`);
-            dim.runCommandAsync(`titleraw ${player.name} actionbar {"rawtext":[{"text": "${debug.build()}"}]}`);
-        }
-
+        manageDebugPlayer(player, dim);
     });
 }, 0);
