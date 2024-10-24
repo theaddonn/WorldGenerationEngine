@@ -5,8 +5,8 @@ import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
 import { advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
 import { SliderConfig, terrainConfig } from "./config";
-export let CHUNK_RANGE = 5;
-export let SUBCHUNK_SIZE = 2;
+export let CHUNK_RANGE = 6;
+export let SUBCHUNK_SIZE = 16;
 
 export function initChunkConfig() {
     terrainConfig.addConfigOption(
