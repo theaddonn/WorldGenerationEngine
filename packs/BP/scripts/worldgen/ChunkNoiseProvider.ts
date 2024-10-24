@@ -289,29 +289,8 @@ class ChunkNoiseProvider {
             this.climateCache.delete(strKey);
             this.tieCache.delete(strKey);
             this.moistureCache.delete(strKey);
-            if (renderDebug) {
-                try {
-                    //dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "bedrock");
-                } catch {
-                }
-            }
             yield;
         }
-
-        const aliveArray = positionArray.slice(0, keepReal);
-
-
-        if (renderDebug) {
-            for (const localPos of aliveArray) {
-            
-                try {
-                    //dim.setBlockType(chunkAndYToLocation(localPos, HEIGHT_MAX + 2), "grass");
-                } catch {
-                }
-                yield;
-            }
-        }
-
     }
 }
 
