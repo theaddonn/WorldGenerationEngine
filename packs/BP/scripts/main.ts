@@ -7,31 +7,33 @@ import { manageDebugPlayer } from "./worldgen/debug";
 import { ChunkPosition } from "./worldgen/chunk";
 import { runJob } from "./job";
 import { Vec2 } from "./worldgen/Vec";
-
-
-registerBiomes();
-
-
-let dim = world.getDimension("overworld");
+import { initLimits, performCacheCleanup } from "./worldgen/cache";
 
 export let mainLocation: Vector3;
+let dim = world.getDimension("overworld");
+
+registerBiomes();
+initLimits();
+
+
+
 
 system.afterEvents.scriptEventReceive.subscribe((event) => {
     switch (event.id) {
         case "wge:config": {
-            configure(event.sourceEntity as Player).then(() => {world.sendMessage("Updated Configuration!")});
+            configure(event.sourceEntity as Player).then(() => {});
             break;
         }
         case "wge:cache": {
             const location = dim.getPlayers()[0].location;
             const start = ChunkPosition.fromWorld(new Vec2(location.x, location.z)); 
-            runJob(chunkNoiseProvider.dropUselessInfo(start, 0.5, dim));
+            runJob(chunkNoiseProvider.dropUselessInfo(start, 0.5));
             break;
         }
         case "wge:dropcache": {
             const location = dim.getPlayers()[0].location;
             const start = ChunkPosition.fromWorld(new Vec2(location.x, location.z)); 
-            runJob(chunkNoiseProvider.dropUselessInfo(start, 0.0, dim));
+            runJob(chunkNoiseProvider.dropUselessInfo(start, 0.0));
             visitedChunks.clear();
             workingChunks.clear();
             break;
@@ -39,6 +41,10 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
     }
 })
 
+system.beforeEvents.watchdogTerminate.subscribe((arg) => {
+    console.warn(`Cancled watchdog terminate! ${arg.terminateReason}`);
+    arg.cancel = true;
+})
 
 system.runInterval(() => {
     dim.getPlayers().forEach((player) => {
@@ -46,4 +52,5 @@ system.runInterval(() => {
         managePlayer(player, dim);
         manageDebugPlayer(player, dim);
     });
+    performCacheCleanup();
 }, 0);

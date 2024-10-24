@@ -3,6 +3,7 @@ import { chunkNoiseProvider } from "./ChunkNoiseProvider";
 import { Vec2, Vector2ToString } from "./Vec";
 import { mainLocation } from "../main";
 import { ChunkPosition } from "./chunk";
+import { CacheClearLimit } from "./cache";
 
 
 
@@ -63,7 +64,7 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 .update("Climate Cache Size", chunkNoiseProvider.climateCache.size)
                 .update("Tie Breaker Cache Size", chunkNoiseProvider.tieCache.size)
                 .update("Moisture Cache Size", chunkNoiseProvider.moistureCache.size)
-                .update("Total Cache Size", chunkNoiseProvider.chunkHeightmap.size + chunkNoiseProvider.climateCache.size + chunkNoiseProvider.tieCache.size + chunkNoiseProvider.moistureCache.size)
+                .update("Total Cache Size", `${chunkNoiseProvider.getTotalCacheSize()} Out Of ${CacheClearLimit}`)
         }
 
         dim.runCommandAsync(`titleraw ${player.name} clear`);

@@ -1,11 +1,11 @@
-import { Dimension, Vector2} from "@minecraft/server";
+import { Dimension, Vector2, Vector3} from "@minecraft/server";
 import { Vec2, Vec3} from "./Vec";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
 import {advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
-export let CHUNK_RANGE = 1;
-export let SUBCHUNK_SIZE = 16;
+export let CHUNK_RANGE = 5;
+export let SUBCHUNK_SIZE = 2;
 
 export function setChunkRange(val: number) {
     CHUNK_RANGE = val;
@@ -27,6 +27,10 @@ export class ChunkPosition {
 
     static fromWorld(pos: Vector2): ChunkPosition {
         return new ChunkPosition(Math.floor(pos.x / SUBCHUNK_SIZE), Math.floor(pos.y / SUBCHUNK_SIZE));
+    }
+
+    static from3D(pos: Vector3): ChunkPosition {
+        return ChunkPosition.fromWorld({x: pos.x, y: pos.z});
     }
 
     toBlock(): BlockPosition {

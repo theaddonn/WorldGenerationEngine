@@ -111,8 +111,6 @@ class ChunkNoiseProvider {
         
         const finalizedBiomeData = this.generateBiomeData(heightmap, climateNoise, tieBreakerNoise, moistureMap);
 
-        this.checkHeightExtremes(largest, smallest);
-
         return { largest, heightmap, biomemap: finalizedBiomeData };
     }
     
@@ -235,15 +233,6 @@ class ChunkNoiseProvider {
         return biomeData;
     }
 
-    private checkHeightExtremes(largest: number, smallest: number) {
-        if (largest > HEIGHT_MAX) {
-            world.sendMessage(`Largest is higher than expected! ${largest}`);
-        }
-        if (smallest < HEIGHT_MIN) {
-            world.sendMessage(`Smallest is lower than expected! ${smallest}`);
-        }
-    }
-
     getOrCacheChunkHeight(pos: Vector2): ChunkNoise {
         if (this.chunkHeightmap.has(Vector2ToString(pos))) {
             const val = this.chunkHeightmap.get(Vector2ToString(pos));
@@ -261,7 +250,7 @@ class ChunkNoiseProvider {
     }
 
 
-    *dropUselessInfo(pos: ChunkPosition, keepPercent: number = 0.10, dim: Dimension) {
+    *dropUselessInfo(pos: ChunkPosition, keepPercent: number = 0.10, finishCallback?: () => void) {
         let positionArray = new Array<Vec2>(this.chunkHeightmap.size);
 
         const keepReal = Math.ceil(this.chunkHeightmap.size * keepPercent);
@@ -269,7 +258,6 @@ class ChunkNoiseProvider {
         let idx = 0;
         for (const pos of this.chunkHeightmap.keys())   {
             positionArray[idx++] = Vec2.fromStr(pos);
-            yield;
         } 
 
         positionArray.sort((a, b) => {
@@ -277,7 +265,6 @@ class ChunkNoiseProvider {
             let bDist = pos.distance(b);
             return aDist - bDist;
         });
-        yield;
 
         const deadArray = positionArray.slice(keepReal);
 
@@ -288,8 +275,16 @@ class ChunkNoiseProvider {
             this.climateCache.delete(strKey);
             this.tieCache.delete(strKey);
             this.moistureCache.delete(strKey);
-            yield;
         }
+
+        if (finishCallback !== undefined) {
+            finishCallback();
+        }
+        return;
+    }
+
+    getTotalCacheSize(): number {
+        return this.chunkHeightmap.size *4; // These are built at the same time meaning there should never be an issue
     }
 }
 
