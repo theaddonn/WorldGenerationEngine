@@ -90,7 +90,7 @@ class Mountian extends Biome {
         this.multiLayerSurface = false;
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.NORMAL;
-        this.heightBias = HeightBias.REALLY_HIGH;
+        this.heightBias = HeightBias.HIGH;
         this.moistureBias = MoistureSelections.Normal;
     }
 

@@ -23,7 +23,7 @@ export enum MoistureSelections {
 
 export enum HeightBias {
     LOW = 0.3, // Means it must be between the bottom of the noise and 1 third the way up the terrain
-    NORMAL = 0.6, // Means it must be between the bottom third and the top 6th
+    NORMAL = 0.45, // Means it must be between the bottom third and the top 6th
     HIGH = 0.66, // Means it must be between the top 6th and the top of the noise
     REALLY_HIGH = 1,
 }
@@ -107,23 +107,14 @@ class BiomeList {
 
         bestDistance = biomeDistances[0].distance;
 
-        // world.sendMessage(`NEW`)
-
-        // for (const distance of biomeDistances) {
-        //     world.sendMessage(`${distance.distance} ${distance.index} ${this.biomes[distance.index].id}`)
-        // }
-        // world.sendMessage(` BEST ${bestDistance}`)
-
         let withinMargin: number[] = new Array();
-        withinMargin.push(biomeDistances[0].index);
-
-        // for (const obj of biomeDistances) {
-        //     if (obj.distance == bestDistance) {
-        //         withinMargin.push(obj.index);
-        //     } else if (obj.distance - errMargin < bestDistance) {
-        //         withinMargin.push(obj.index);
-        //     }
-        // }
+        for (const obj of biomeDistances) {
+            if (obj.distance == bestDistance) {
+                withinMargin.push(obj.index);
+            } else if (obj.distance - errMargin < bestDistance) {
+                withinMargin.push(obj.index);
+            }
+        }
 
         return withinMargin;
     }
