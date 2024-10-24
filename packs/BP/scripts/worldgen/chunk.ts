@@ -1,5 +1,5 @@
-import { Dimension, Vector2, world } from "@minecraft/server";
-import { Vec2, Vec3, Vector2ToString } from "./Vec";
+import { Dimension, Vector2} from "@minecraft/server";
+import { Vec2, Vec3} from "./Vec";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
@@ -140,11 +140,11 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
     }
 }
 
-export function* buildChunk(pos: ChunkPosition, dim: Dimension, stage: ChunkStage) {
+export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStage: ChunkStage) {
     chunkNoiseProvider.getOrCacheChunkHeight(pos);
     yield;
 
-    if (stage === ChunkStage.None) {
+    if (lastFinishedStage === ChunkStage.None) {
         for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
             const surfaceDepth = biomeManager.surfaceOffset(biome);
             try {
@@ -164,11 +164,11 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, stage: ChunkStag
                 return;
             }
         }
-        stage = advanceStage(pos, stage);
+        lastFinishedStage = advanceStage(pos, lastFinishedStage);
         yield;
     }
     
-    if (stage === ChunkStage.BaseLayer) {
+    if (lastFinishedStage === ChunkStage.BaseLayer) {
         try {
             for (const e of downStack(pos, dim)) {
                 yield;
@@ -176,12 +176,12 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, stage: ChunkStag
         } catch {
             bailGeneration(pos);
         }
-        stage = advanceStage(pos, stage);
+        lastFinishedStage = advanceStage(pos, lastFinishedStage);
         yield;
     }
 
         
-    if (stage === ChunkStage.DownStack) {
+    if (lastFinishedStage === ChunkStage.DownStack) {
         let lastX = -1;
         for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
             try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {return bailGeneration(pos);}
@@ -190,7 +190,7 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, stage: ChunkStag
             }
             lastX = world.x;
         }
-        stage++; // This is a hack it is evil
+        lastFinishedStage++; // This is a hack it is evil
     }
-    finishChunk(pos, stage);
+    finishChunk(pos, lastFinishedStage);
 }
