@@ -4,17 +4,14 @@ import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
 import {advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
+import { SliderConfig, terrainConfig } from "./config";
 export let CHUNK_RANGE = 5;
 export let SUBCHUNK_SIZE = 2;
 
-export function setChunkRange(val: number) {
-    CHUNK_RANGE = val;
+export function initChunkConfig() {
+    terrainConfig
+        .addConfigOption("Chunk Build Distance", new SliderConfig(0, 50, 1, () => {return CHUNK_RANGE}, (range) => {CHUNK_RANGE = range}));
 }
-
-export function setSubchunkSize(val: number) {
-    SUBCHUNK_SIZE = val;
-}
-
 
 export class ChunkPosition {
     x: number;

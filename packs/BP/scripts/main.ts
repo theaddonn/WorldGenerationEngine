@@ -1,13 +1,13 @@
 import { Player, system, Vector3, world } from "@minecraft/server";
-import { managePlayer, visitedChunks, workingChunks } from "./worldgen/generation";
+import { initGenConfig, managePlayer, visitedChunks, workingChunks } from "./worldgen/generation";
 import { registerBiomes } from "./worldgen/biomes";
-import { configure} from "./worldgen/config";
-import { chunkNoiseProvider } from "./worldgen/ChunkNoiseProvider";
-import { manageDebugPlayer } from "./worldgen/debug";
-import { ChunkPosition } from "./worldgen/chunk";
+import { terrainConfig} from "./worldgen/config";
+import { chunkNoiseProvider, initChunkNoiseProviderConfig } from "./worldgen/ChunkNoiseProvider";
+import { initDebugConfig, manageDebugPlayer } from "./worldgen/debug";
+import { ChunkPosition, initChunkConfig } from "./worldgen/chunk";
 import { runJob } from "./job";
 import { Vec2 } from "./worldgen/Vec";
-import { initLimits, performCacheCleanup } from "./worldgen/cache";
+import { initCacheConfig, initLimits, performCacheCleanup } from "./worldgen/cache";
 
 export let mainLocation: Vector3;
 let dim = world.getDimension("overworld");
@@ -21,7 +21,7 @@ initLimits();
 system.afterEvents.scriptEventReceive.subscribe((event) => {
     switch (event.id) {
         case "wge:config": {
-            configure(event.sourceEntity as Player).then(() => {});
+            terrainConfig.show(event.sourceEntity as Player).then(() => {});
             break;
         }
         case "wge:cache": {
@@ -54,3 +54,12 @@ system.runInterval(() => {
     });
     performCacheCleanup();
 }, 0);
+
+
+world.afterEvents.worldInitialize.subscribe((_) => {
+    initCacheConfig();
+    initChunkConfig();
+    initChunkNoiseProviderConfig();
+    initDebugConfig();
+    initGenConfig();
+});

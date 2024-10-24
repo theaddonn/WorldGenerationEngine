@@ -1,40 +1,223 @@
 import { ModalFormData } from "@minecraft/server-ui";
-import { MAX_BUILDING_CHUNKS, setMaxBuildingChunks } from "./generation";
-import { CHUNK_RANGE, setChunkRange } from "./chunk";
-import { AMPLITUDE, BASE_OFFSET, FREQUENCY, OCTAVE_2D, PERSISTANCE, setAmplitude, setOctave2D, setPersistance, setBaseOffset, setFrequency } from "./ChunkNoiseProvider";
-import { Player } from "@minecraft/server";
-import { RenderDebug, renderDebug, ShowCacheSizes, showCacheSizes } from "./debug";
+import { Player, RawMessage } from "@minecraft/server";
 
 const MULTIPLY_CONSTANT = 10000
 
-export async function configure(player: Player) {
-    let form = new ModalFormData()
-        .title("Config")
-        .slider("MAX_BUILDING_CHUNKS", 0, 20000, 10, MAX_BUILDING_CHUNKS)
-        .slider("CHUNK_RANGE", 0, 48, 1, CHUNK_RANGE)
-        .slider("OCTAVE_2D", 0, 12, 1, OCTAVE_2D)
-        .slider("AMPLITUDE", 0, 100, 5, AMPLITUDE)
-        .slider("FREQUENCY", 0, 0.02 * MULTIPLY_CONSTANT, 0.0005, FREQUENCY * MULTIPLY_CONSTANT)
-        .slider("BASE_OFFSET", 0, 200, 10, BASE_OFFSET)
-        .slider("PERSISTANCE", 0, 1 * 100, 0.1, PERSISTANCE * 100)
-        .toggle("Render Debug Menu", renderDebug)
-        .toggle("Show Cache Sizes Menu", showCacheSizes);
 
+export enum FieldType {
+    Slider,
+    FloatSlider,
+    Toggle,
+    Text
+}
 
-    let response = await form.show(player);
+interface ConfigTypeCommon {
+    getDefault();
+    setObjValue(val: any): void;
 
-    if (response.formValues === undefined) {
-        return;
+    type: FieldType;
+}
+
+export class SliderConfig implements ConfigTypeCommon {
+    min: number;
+    max: number;
+    step: number;
+    defaultValue: number | (() => number);
+    setValue: ((val: number) => void);
+    type: FieldType;
+
+    constructor(min: number, max: number, step: number, defaultValue: number | (() => number), setValue: ((val: number) => void)) {
+        this.min = min;
+        this.max = max;
+        this.step = step;
+        this.defaultValue = defaultValue;
+        this.setValue = setValue;
+        this.type = FieldType.Slider;
     }
 
-    setMaxBuildingChunks(response.formValues![0] as number);
-    setChunkRange(response.formValues![1] as number);
-    setOctave2D(response.formValues![2] as number);
-    setAmplitude(response.formValues![3] as number);
-    setFrequency(response.formValues![4] as number / MULTIPLY_CONSTANT);
-    setBaseOffset(response.formValues![5] as number);
-    setPersistance(response.formValues![6] as number / 100);
-    RenderDebug(response.formValues[7]! as boolean);
-    ShowCacheSizes(response.formValues[8]! as boolean);
-
+    getDefault() {
+        if (typeof this.defaultValue === "number") {
+            return this.defaultValue as number;
+        }
+        return this.defaultValue();
+    }
+    setObjValue(val: any) {
+        this.setValue(val as number);
+    }
 }
+
+export class FloatSliderConfig implements ConfigTypeCommon {
+    min: number;
+    max: number;
+    step: number;
+    multiplyConstant: number;
+    defaultValue: number | (() => number);
+    setValue: (val: number) => void;
+    type: FieldType;  // Added type member
+
+    constructor(min: number, max: number, step: number, multiplyConstant: number, defaultValue: number | (() => number), setValue: (val: number) => void) {
+        this.min = min;
+        this.max = max;
+        this.step = step * multiplyConstant;
+        this.multiplyConstant = multiplyConstant;
+        this.defaultValue = defaultValue;
+        this.setValue = setValue ;
+        this.type = FieldType.FloatSlider;  // Set type member
+    }
+
+    getDefault() {
+        if (typeof this.defaultValue === "number") {
+            return this.defaultValue * this.multiplyConstant;
+        }
+        return this.defaultValue() * this.multiplyConstant;
+    }
+
+    setObjValue(val: any): void {
+        this.setValue(val as number / this.multiplyConstant);
+    }
+}
+
+export class ToggleConfig implements ConfigTypeCommon {
+    defaultValue: boolean | (() => boolean);
+    setValue: (val: boolean) => void;
+    type: FieldType;  // Added type member
+
+    constructor(defaultValue: boolean | (() => boolean), setValue: (val: boolean) => void) {
+        this.defaultValue = defaultValue;
+        this.setValue = setValue;
+        this.type = FieldType.Toggle;  // Set type member
+    }
+
+    getDefault() {
+        if (typeof this.defaultValue === "boolean") {
+            return this.defaultValue;
+        }
+        return this.defaultValue();
+    }
+
+    setObjValue(val: any): void {
+        this.setValue(val as boolean);
+    }
+}
+
+export class TextConfig implements ConfigTypeCommon {
+    placeHolder: string | RawMessage | (() => string | RawMessage);
+    defaultText: string | RawMessage | (() => string | RawMessage);
+    setValue: (val: string) => void;
+    type: FieldType;  // Added type member
+
+    constructor(placeHolder: string | RawMessage | (() => string | RawMessage), defaultText: string | RawMessage | (() => string | RawMessage), setValue: (val: string) => void) {
+        this.placeHolder = placeHolder;
+        this.defaultText = defaultText;
+        this.setValue = setValue;
+        this.type = FieldType.Text;  // Set type member
+    }
+
+    getDefault() {
+        if (typeof this.defaultText === "function") {
+            return this.defaultText();
+        }
+        return this.defaultText;
+    }
+
+    getPlaceHolder() {
+        if (typeof this.placeHolder === "function") {
+            return this.placeHolder();
+        }
+        return this.placeHolder;
+    }
+
+    setObjValue(val: any): void {
+        this.setValue(val as string);
+    }
+}
+
+export type ConfigUnion = SliderConfig | FloatSliderConfig | ToggleConfig | TextConfig; 
+
+class Config {
+    private options: Map<string, ConfigUnion>
+
+
+    constructor() {
+        this.options = new Map();
+    }
+
+    addConfigOption(lable: string, config: ConfigUnion): Config {
+        this.options.set(lable, config);
+        return this;
+    }
+
+
+    async show(target: Player) {
+        let form = new ModalFormData();
+        for (const [name, type] of this.options) {
+            switch (type.type) {
+                case FieldType.Slider: {
+                    this.addSlider(name, type as SliderConfig, form);
+                    break;
+                }
+                case FieldType.FloatSlider: {
+                    this.addFloatSlider(name, type as FloatSliderConfig, form);
+                    break;
+                }
+                case FieldType.Toggle: {
+                    this.addToggle(name, type as ToggleConfig, form);
+                    break;
+                }
+                case FieldType.Text: {
+                    this.addTextField(name, type as TextConfig, form);
+                    break;
+                }
+            }
+        }
+        form.title("Config");
+        let response = await form.show(target);
+        if (response.formValues === undefined) {
+            return;
+        }
+        this.dispatchUpdateCalls(response.formValues!);
+    }
+
+    private dispatchUpdateCalls(values: (boolean | number | string)[]) {
+        let idx = 0;
+        for (const [_, type] of this.options) {
+            type.setObjValue(values[idx]);
+            idx++;
+        }
+    }
+
+
+    private addSlider(lable: string, sliderConfig: SliderConfig, form: ModalFormData) {
+        form.slider(
+            lable,
+            sliderConfig.min,
+            sliderConfig.max,
+            sliderConfig.step,
+            sliderConfig.getDefault()
+        )
+    }
+
+    private addFloatSlider(lable: string, sliderConfig: FloatSliderConfig, form: ModalFormData) {
+        form.slider(
+            lable,
+            sliderConfig.min * sliderConfig.multiplyConstant,
+            sliderConfig.max * sliderConfig.multiplyConstant,
+            sliderConfig.step,
+            sliderConfig.getDefault()
+        )
+    }
+
+    private addToggle(lable: string, toggleConfig: ToggleConfig, form: ModalFormData) {
+        form.toggle(lable, toggleConfig.getDefault());
+    }
+
+    private addTextField(lable: string, textConfig: TextConfig, form: ModalFormData) {
+        form.textField(lable, 
+            textConfig.getPlaceHolder(),
+            textConfig.getDefault()
+        )
+    }
+}
+
+
+export let terrainConfig = new Config();

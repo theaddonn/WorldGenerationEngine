@@ -3,11 +3,13 @@ import { buildChunk, CHUNK_RANGE, ChunkPosition, } from "./chunk";
 import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
 import { debug } from "./debug";
+import { SliderConfig, terrainConfig } from "./config";
 
 export let MAX_BUILDING_CHUNKS = 100;
 
-export function setMaxBuildingChunks(val: number) {
-    MAX_BUILDING_CHUNKS = val;
+
+export function initGenConfig() {
+    terrainConfig.addConfigOption("Max building chunks", new SliderConfig(10, 20000, 1, () => {return MAX_BUILDING_CHUNKS}, (val) => {MAX_BUILDING_CHUNKS = val;}))
 }
 export let currentChunkBuildCount = 0;
 
