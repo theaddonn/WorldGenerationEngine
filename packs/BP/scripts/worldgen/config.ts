@@ -1,14 +1,13 @@
 import { ModalFormData } from "@minecraft/server-ui";
 import { Player, RawMessage } from "@minecraft/server";
 
-const MULTIPLY_CONSTANT = 10000
-
+const MULTIPLY_CONSTANT = 10000;
 
 export enum FieldType {
     Slider,
     FloatSlider,
     Toggle,
-    Text
+    Text,
 }
 
 interface ConfigTypeCommon {
@@ -23,10 +22,16 @@ export class SliderConfig implements ConfigTypeCommon {
     max: number;
     step: number;
     defaultValue: number | (() => number);
-    setValue: ((val: number) => void);
+    setValue: (val: number) => void;
     type: FieldType;
 
-    constructor(min: number, max: number, step: number, defaultValue: number | (() => number), setValue: ((val: number) => void)) {
+    constructor(
+        min: number,
+        max: number,
+        step: number,
+        defaultValue: number | (() => number),
+        setValue: (val: number) => void
+    ) {
         this.min = min;
         this.max = max;
         this.step = step;
@@ -53,16 +58,23 @@ export class FloatSliderConfig implements ConfigTypeCommon {
     multiplyConstant: number;
     defaultValue: number | (() => number);
     setValue: (val: number) => void;
-    type: FieldType;  // Added type member
+    type: FieldType; // Added type member
 
-    constructor(min: number, max: number, step: number, multiplyConstant: number, defaultValue: number | (() => number), setValue: (val: number) => void) {
+    constructor(
+        min: number,
+        max: number,
+        step: number,
+        multiplyConstant: number,
+        defaultValue: number | (() => number),
+        setValue: (val: number) => void
+    ) {
         this.min = min;
         this.max = max;
         this.step = step * multiplyConstant;
         this.multiplyConstant = multiplyConstant;
         this.defaultValue = defaultValue;
-        this.setValue = setValue ;
-        this.type = FieldType.FloatSlider;  // Set type member
+        this.setValue = setValue;
+        this.type = FieldType.FloatSlider; // Set type member
     }
 
     getDefault() {
@@ -73,19 +85,19 @@ export class FloatSliderConfig implements ConfigTypeCommon {
     }
 
     setObjValue(val: any): void {
-        this.setValue(val as number / this.multiplyConstant);
+        this.setValue((val as number) / this.multiplyConstant);
     }
 }
 
 export class ToggleConfig implements ConfigTypeCommon {
     defaultValue: boolean | (() => boolean);
     setValue: (val: boolean) => void;
-    type: FieldType;  // Added type member
+    type: FieldType; // Added type member
 
     constructor(defaultValue: boolean | (() => boolean), setValue: (val: boolean) => void) {
         this.defaultValue = defaultValue;
         this.setValue = setValue;
-        this.type = FieldType.Toggle;  // Set type member
+        this.type = FieldType.Toggle; // Set type member
     }
 
     getDefault() {
@@ -104,13 +116,17 @@ export class TextConfig implements ConfigTypeCommon {
     placeHolder: string | RawMessage | (() => string | RawMessage);
     defaultText: string | RawMessage | (() => string | RawMessage);
     setValue: (val: string) => void;
-    type: FieldType;  // Added type member
+    type: FieldType; // Added type member
 
-    constructor(placeHolder: string | RawMessage | (() => string | RawMessage), defaultText: string | RawMessage | (() => string | RawMessage), setValue: (val: string) => void) {
+    constructor(
+        placeHolder: string | RawMessage | (() => string | RawMessage),
+        defaultText: string | RawMessage | (() => string | RawMessage),
+        setValue: (val: string) => void
+    ) {
         this.placeHolder = placeHolder;
         this.defaultText = defaultText;
         this.setValue = setValue;
-        this.type = FieldType.Text;  // Set type member
+        this.type = FieldType.Text; // Set type member
     }
 
     getDefault() {
@@ -132,11 +148,10 @@ export class TextConfig implements ConfigTypeCommon {
     }
 }
 
-export type ConfigUnion = SliderConfig | FloatSliderConfig | ToggleConfig | TextConfig; 
+export type ConfigUnion = SliderConfig | FloatSliderConfig | ToggleConfig | TextConfig;
 
 class Config {
-    private options: Map<string, ConfigUnion>
-
+    private options: Map<string, ConfigUnion>;
 
     constructor() {
         this.options = new Map();
@@ -146,7 +161,6 @@ class Config {
         this.options.set(lable, config);
         return this;
     }
-
 
     async show(target: Player) {
         let form = new ModalFormData();
@@ -186,15 +200,8 @@ class Config {
         }
     }
 
-
     private addSlider(lable: string, sliderConfig: SliderConfig, form: ModalFormData) {
-        form.slider(
-            lable,
-            sliderConfig.min,
-            sliderConfig.max,
-            sliderConfig.step,
-            sliderConfig.getDefault()
-        )
+        form.slider(lable, sliderConfig.min, sliderConfig.max, sliderConfig.step, sliderConfig.getDefault());
     }
 
     private addFloatSlider(lable: string, sliderConfig: FloatSliderConfig, form: ModalFormData) {
@@ -204,7 +211,7 @@ class Config {
             sliderConfig.max * sliderConfig.multiplyConstant,
             sliderConfig.step,
             sliderConfig.getDefault()
-        )
+        );
     }
 
     private addToggle(lable: string, toggleConfig: ToggleConfig, form: ModalFormData) {
@@ -212,12 +219,8 @@ class Config {
     }
 
     private addTextField(lable: string, textConfig: TextConfig, form: ModalFormData) {
-        form.textField(lable, 
-            textConfig.getPlaceHolder(),
-            textConfig.getDefault()
-        )
+        form.textField(lable, textConfig.getPlaceHolder(), textConfig.getDefault());
     }
 }
-
 
 export let terrainConfig = new Config();

@@ -26,9 +26,8 @@ export class BlockPosition {
     }
 }
 
-
 export function chunkAndYToLocation(chunk: Vector2, y: number): Vector3 {
-    return {x: chunk.x * SUBCHUNK_SIZE, y: y, z: chunk.y * SUBCHUNK_SIZE};
+    return { x: chunk.x * SUBCHUNK_SIZE, y: y, z: chunk.y * SUBCHUNK_SIZE };
 }
 
 export const WorldGenBlockTypes = ["deepslate", "stone", "dirt", "grass", "short_grass", "air"];

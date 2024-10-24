@@ -11,12 +11,10 @@ export class Vec2 {
     }
 
     static fromStr(data: String): Vec2 {
-
         const parts = data.split(" ");
         const x = parseFloat(parts[0]);
-        const y = parseFloat(parts[1])
+        const y = parseFloat(parts[1]);
         return new Vec2(x, y);
-
     }
 }
 

@@ -84,7 +84,6 @@ export function initChunkNoiseProviderConfig() {
         );
 }
 
-
 export let HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
 export let HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
 world.sendMessage(`new min and max ${HEIGHT_MIN} ${HEIGHT_MAX}`);

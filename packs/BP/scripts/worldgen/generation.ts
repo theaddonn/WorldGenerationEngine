@@ -1,5 +1,5 @@
 import { Dimension, Player, Vector2, world } from "@minecraft/server";
-import { buildChunk, CHUNK_RANGE, ChunkPosition, } from "./chunk";
+import { buildChunk, CHUNK_RANGE, ChunkPosition } from "./chunk";
 import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
 import { debug } from "./debug";
@@ -7,9 +7,21 @@ import { SliderConfig, terrainConfig } from "./config";
 
 export let MAX_BUILDING_CHUNKS = 100;
 
-
 export function initGenConfig() {
-    terrainConfig.addConfigOption("Max building chunks", new SliderConfig(10, 20000, 1, () => {return MAX_BUILDING_CHUNKS}, (val) => {MAX_BUILDING_CHUNKS = val;}))
+    terrainConfig.addConfigOption(
+        "Max building chunks",
+        new SliderConfig(
+            10,
+            20000,
+            1,
+            () => {
+                return MAX_BUILDING_CHUNKS;
+            },
+            (val) => {
+                MAX_BUILDING_CHUNKS = val;
+            }
+        )
+    );
 }
 export let currentChunkBuildCount = 0;
 
@@ -33,7 +45,7 @@ export enum ChunkStage {
     BaseLayer,
     DownStack,
     Decorate,
-    Finished
+    Finished,
 }
 export let visitedChunks = new Map<String, ChunkStage>();
 export let workingChunks = new Set<String>();
@@ -45,14 +57,13 @@ export function advanceStage(position: ChunkPosition, stage: ChunkStage): ChunkS
 }
 
 export function finishChunk(pos: ChunkPosition, state: ChunkStage) {
-    if (state+1 !== ChunkStage.Finished) {
+    if (state + 1 !== ChunkStage.Finished) {
         world.sendMessage(`Stage when finished doesnt equal finished ${state} ${ChunkStage.Finished}`);
     }
-    advanceStage(pos, state)
+    advanceStage(pos, state);
     workingChunks.delete(Vector2ToString(pos));
     removeChunk();
 }
-
 
 function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
     debug.update(`Queue out of ${MAX_BUILDING_CHUNKS}`, currentChunkBuildCount);
@@ -65,13 +76,11 @@ function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
 
     let visitState = visitedChunks.get(Vector2ToString(pos));
     if (visitState === undefined) {
-        visitState = ChunkStage.None
+        visitState = ChunkStage.None;
     }
     if (visitState === ChunkStage.Finished) {
         return;
     }
-
-
 
     addWorkingChunk(pos);
 

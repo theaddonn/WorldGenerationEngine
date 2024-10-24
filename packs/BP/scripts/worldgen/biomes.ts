@@ -5,7 +5,6 @@ const TALL_THRESHHOLD = 0.96;
 const GRASS_THRESHHOLD = 0.86;
 const SHRUB_THRESHHOLD = 0.9;
 
-
 class Planes extends Biome {
     constructor() {
         super();
@@ -44,7 +43,7 @@ class FrozenPlanes extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
         this.heightBias = HeightBias.NORMAL;
-        this.moistureBias = MoistureSelections.Wet
+        this.moistureBias = MoistureSelections.Wet;
     }
 
     decorate(pos: Vec3, dim: Dimension) {
@@ -56,7 +55,6 @@ class FrozenPlanes extends Biome {
 }
 
 class Desert extends Biome {
-    
     constructor() {
         super();
 
@@ -72,7 +70,6 @@ class Desert extends Biome {
         this.moistureBias = MoistureSelections.Dry;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {
         const seed = Math.random();
         if (seed > SHRUB_THRESHHOLD) {
@@ -82,7 +79,6 @@ class Desert extends Biome {
 }
 
 class Mountian extends Biome {
-    
     constructor() {
         super();
 
@@ -95,14 +91,12 @@ class Mountian extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.NORMAL;
         this.heightBias = HeightBias.REALLY_HIGH;
-        this.moistureBias = MoistureSelections.Normal
+        this.moistureBias = MoistureSelections.Normal;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {}
 }
 class FrozenMountian extends Biome {
-    
     constructor() {
         super();
 
@@ -115,10 +109,9 @@ class FrozenMountian extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
         this.heightBias = HeightBias.REALLY_HIGH;
-        this.moistureBias = MoistureSelections.Wet
+        this.moistureBias = MoistureSelections.Wet;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {
         const seed = Math.random();
         if (seed > 0.8) {
@@ -127,7 +120,6 @@ class FrozenMountian extends Biome {
     }
 }
 class SandMountian extends Biome {
-    
     constructor() {
         super();
 
@@ -143,11 +135,9 @@ class SandMountian extends Biome {
         this.moistureBias = MoistureSelections.Dry;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {}
 }
 class SandMountianTall extends Biome {
-    
     constructor() {
         super();
 
@@ -163,11 +153,8 @@ class SandMountianTall extends Biome {
         this.moistureBias = MoistureSelections.Dry;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {}
 }
-
-
 
 export function registerBiomes() {
     biomeManager.addBiome(new Planes());

@@ -1,16 +1,28 @@
-import { Dimension, Vector2, Vector3} from "@minecraft/server";
-import { Vec2, Vec3} from "./Vec";
+import { Dimension, Vector2, Vector3 } from "@minecraft/server";
+import { Vec2, Vec3 } from "./Vec";
 import { BlockPosition } from "./block";
 import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
 import { biomeManager } from "./biome";
-import {advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
+import { advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
 import { SliderConfig, terrainConfig } from "./config";
 export let CHUNK_RANGE = 5;
 export let SUBCHUNK_SIZE = 2;
 
 export function initChunkConfig() {
-    terrainConfig
-        .addConfigOption("Chunk Build Distance", new SliderConfig(0, 50, 1, () => {return CHUNK_RANGE}, (range) => {CHUNK_RANGE = range}));
+    terrainConfig.addConfigOption(
+        "Chunk Build Distance",
+        new SliderConfig(
+            0,
+            50,
+            1,
+            () => {
+                return CHUNK_RANGE;
+            },
+            (range) => {
+                CHUNK_RANGE = range;
+            }
+        )
+    );
 }
 
 export class ChunkPosition {
@@ -27,7 +39,7 @@ export class ChunkPosition {
     }
 
     static from3D(pos: Vector3): ChunkPosition {
-        return ChunkPosition.fromWorld({x: pos.x, y: pos.z});
+        return ChunkPosition.fromWorld({ x: pos.x, y: pos.z });
     }
 
     toBlock(): BlockPosition {
@@ -56,11 +68,9 @@ export class LocalChunkPosition {
         }
         if (pos.y < 0) {
             z = -z;
-        } 
+        }
 
-        return new LocalChunkPosition(
-            Math.floor(x % SUBCHUNK_SIZE), Math.floor(z % SUBCHUNK_SIZE)
-        )
+        return new LocalChunkPosition(Math.floor(x % SUBCHUNK_SIZE), Math.floor(z % SUBCHUNK_SIZE));
     }
 }
 
@@ -108,7 +118,7 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
                 BlockPosition.fromVec({ x: base.x + x, y: base.y + z - 1 }),
                 BlockPosition.fromVec({ x: base.x + x, y: base.y + z + 1 }),
             ];
-            
+
             for (let idx = 0; idx < samplePositions.length; idx++) {
                 const position = samplePositions[idx];
                 let height;
@@ -121,17 +131,20 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
             }
             let finished = false;
             const biome = noise.getBiome(new Vec2(x, z));
-            const surfaceOffset =  biomeManager.surfaceOffset(biome);
+            const surfaceOffset = biomeManager.surfaceOffset(biome);
             for (let offset = 1; !finished; offset++) {
                 let shouldFill = false;
                 for (const height of heights) {
-                    if (height < (currentHeight - offset - surfaceOffset)) {
+                    if (height < currentHeight - offset - surfaceOffset) {
                         shouldFill = true;
                         break;
                     }
                 }
                 if (shouldFill === true) {
-                    dim.setBlockType({ x: base.x + x, y: currentHeight - surfaceOffset - offset, z: base.y + z }, biomeManager.underground(biome));
+                    dim.setBlockType(
+                        { x: base.x + x, y: currentHeight - surfaceOffset - offset, z: base.y + z },
+                        biomeManager.underground(biome)
+                    );
                 } else {
                     finished = true;
                 }
@@ -156,9 +169,12 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStag
                 } else {
                     dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
                 }
-        
+
                 if (biomeManager.support(biome)) {
-                    dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
+                    dim.setBlockType(
+                        { x: world.x, y: val - surfaceDepth, z: world.y },
+                        biomeManager.underground(biome)
+                    );
                 }
             } catch {
                 bailGeneration(pos);
@@ -168,7 +184,7 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStag
         lastFinishedStage = advanceStage(pos, lastFinishedStage);
         yield;
     }
-    
+
     if (lastFinishedStage === ChunkStage.BaseLayer) {
         try {
             for (const e of downStack(pos, dim)) {
@@ -181,11 +197,14 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStag
         yield;
     }
 
-        
     if (lastFinishedStage === ChunkStage.DownStack) {
         let lastX = -1;
-        for (let {world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-            try  { biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);} catch {return bailGeneration(pos);}
+        for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+            try {
+                biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);
+            } catch {
+                return bailGeneration(pos);
+            }
             if (lastX != world.x) {
                 yield;
             }
