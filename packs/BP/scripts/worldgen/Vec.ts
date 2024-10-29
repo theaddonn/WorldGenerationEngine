@@ -48,6 +48,6 @@ export class Vec3 {
 export function Vector3ToString(vec: Vector3): String {
     return `${vec.x} ${vec.y} ${vec.z}`;
 }
-export function Vector2ToString(vec: Vector2): String {
+export function Vector2ToString(vec: Vector2): string {
     return `${vec.x} ${vec.y}`;
 }

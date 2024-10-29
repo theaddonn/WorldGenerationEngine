@@ -4,6 +4,7 @@ import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { runJob } from "../job";
 import { debug } from "./debug";
 import { SliderConfig, terrainConfig } from "./config";
+import { jsonBlob, readStringFromWorld, writeStringToWorld } from "../serialize";
 
 export let MAX_BUILDING_CHUNKS = 100;
 
@@ -45,10 +46,12 @@ export enum ChunkStage {
     BaseLayer,
     DownStack,
     Decorate,
+    Structure,
+    HardSurface,
     Finished,
 }
-export let visitedChunks = new Map<String, ChunkStage>();
-export let workingChunks = new Set<String>();
+export let visitedChunks: Map<String, ChunkStage>;
+export let workingChunks = new Set<string>();
 
 export function advanceStage(position: ChunkPosition, stage: ChunkStage): ChunkStage {
     stage++;
@@ -73,18 +76,18 @@ function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
     if (currentChunkBuildCount >= MAX_BUILDING_CHUNKS) {
         return;
     }
-
+    let isMidState = true;
     let visitState = visitedChunks.get(Vector2ToString(pos));
     if (visitState === undefined) {
+        isMidState = false;
         visitState = ChunkStage.None;
-    }
-    if (visitState === ChunkStage.Finished) {
+    } else if (visitState === ChunkStage.Finished) {
         return;
     }
 
     addWorkingChunk(pos);
 
-    runJob(buildChunk(pos, dim, visitState));
+    runJob(buildChunk(pos, dim, visitState, isMidState));
 }
 
 export function managePlayer(player: Player, dim: Dimension) {
@@ -104,5 +107,27 @@ export function managePlayer(player: Player, dim: Dimension) {
 
     for (const pos of queue) {
         dispatchChunkGen(pos, dim);
+    }
+}
+
+export function saveVisitedCaches() {
+    let blob: jsonBlob = {};
+    for (const [key, stage] of visitedChunks) {
+        blob[key as string] = stage;
+    }
+    writeStringToWorld("VISITED_CHUNK_MARKERS", JSON.stringify(blob));
+}
+export function loadVisitedCaches() {
+    visitedChunks = new Map<String, ChunkStage>();
+    const visitedBlob = readStringFromWorld("VISITED_CHUNK_MARKERS");
+    if (visitedBlob === undefined) {
+        console.log(`No Saved Chunks In Cache. Assuming New World`);
+        return;
+    }
+    const out = JSON.parse(visitedBlob);
+
+    for (const key in out) {
+        const val = out[key];
+        visitedChunks.set(key, val);
     }
 }

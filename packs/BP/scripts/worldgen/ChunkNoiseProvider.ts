@@ -9,7 +9,7 @@ import { FloatSliderConfig, SliderConfig, terrainConfig } from "./config";
 
 export let OCTAVE_2D = 5;
 export let AMPLITUDE = 50;
-export let FREQUENCY = 0.0055;
+export let FREQUENCY = 0.0072;
 export let BASE_OFFSET = 70;
 export let PERSISTANCE = 0.5;
 
@@ -86,8 +86,6 @@ export function initChunkNoiseProviderConfig() {
 
 export let HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
 export let HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
-world.sendMessage(`new min and max ${HEIGHT_MIN} ${HEIGHT_MAX}`);
-
 class ChunkNoise {
     values: Int16Array;
     biomeIndex: Int16Array;
@@ -150,7 +148,8 @@ class ChunkNoiseProvider {
         let moistureMap = new Float32Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
 
         const base = BlockPosition.fromChunk(pos);
-        let { largest, smallest } = this.populateHeightNoise(base, heightmap, tieBreakerNoise);
+
+        let { largest, smallest } = this.populateHeightNoise(base, heightmap);
 
         this.populateTieNoise(base, tieBreakerNoise);
         this.populateClimateNoise(base, climateNoise);
@@ -161,7 +160,10 @@ class ChunkNoiseProvider {
         return { largest, heightmap, biomemap: finalizedBiomeData };
     }
 
-    private populateHeightNoise(base: Vector2, heightmap: Int16Array, tieBreakerNoise: Float32Array) {
+    getCache(pos: ChunkPosition): ChunkNoise {
+        return this.chunkHeightmap.get(Vector2ToString(pos))!;
+    }
+    private populateHeightNoise(base: Vector2, heightmap: Int16Array) {
         let largest = -21213890;
         let smallest = 13721987938;
 
@@ -222,7 +224,35 @@ class ChunkNoiseProvider {
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         return this.getClimateNoise(chunkPos, local);
     }
+    getHeightNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
+        const cache = this.chunkHeightmap.get(Vector2ToString(Chunk));
+        if (cache === undefined) {
+            return 0.5;
+        } else {
+            return cache.get(Local);
+        }
+    }
+    getHeightNoiseFull(fullPos: Vector3): number {
+        const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
+        const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
+        return this.getHeightNoise(chunkPos, local);
 
+    } 
+
+    getBiome(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
+        const cache = this.chunkHeightmap.get(Vector2ToString(Chunk));
+        if (cache === undefined) {
+            return 0;
+        } else {
+            return cache.getBiome(Local);
+        }
+    }
+    getBiomeFull(fullPos: Vector3): number {
+        const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
+        const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
+        return this.getBiome(chunkPos, local);
+
+    } 
     getMoistureNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
         const cache = this.moistureCache.get(Vector2ToString(Chunk));
         if (cache === undefined) {

@@ -1,13 +1,14 @@
 import { ModalFormData } from "@minecraft/server-ui";
 import { Player, RawMessage } from "@minecraft/server";
-
-const MULTIPLY_CONSTANT = 10000;
+import { jsonBlob } from "../serialize";
+import { saveConfig } from "../main";
 
 export enum FieldType {
     Slider,
     FloatSlider,
     Toggle,
     Text,
+    NumberInput
 }
 
 interface ConfigTypeCommon {
@@ -148,18 +149,82 @@ export class TextConfig implements ConfigTypeCommon {
     }
 }
 
-export type ConfigUnion = SliderConfig | FloatSliderConfig | ToggleConfig | TextConfig;
+export class NumberInputConfig implements ConfigTypeCommon {
+    value: number | (() => number);
+    setValue: (val: number) => void;
+    isFloat: boolean;
+    type: FieldType;
+    constructor(
+        value: number | (() => number),
+        setValue: (val: number) => void,
+        isFloat: boolean = false
+    ) {
+        this.value = value;
+        this.setValue = setValue;
+        this.isFloat = isFloat
+        this.type = FieldType.NumberInput;
+    }
+
+    getDefault() {
+        let val = 0;
+        if (typeof this.value === "function") {
+            val = this.value();
+        }
+        else { 
+            val = this.value;
+        }
+        return val.toString();
+    }
+
+    setObjValue(val: any): void {
+        const newVal = val as string;
+        let num = 0;
+        if (this.isFloat) {
+            num = parseFloat(newVal);
+        } else {
+            num = parseInt(newVal);
+        }
+        this.setValue(num);
+    }
+}
+
+export type ConfigUnion = SliderConfig | FloatSliderConfig | ToggleConfig | TextConfig | NumberInputConfig;
 
 class Config {
     private options: Map<string, ConfigUnion>;
+    private closedCallbacks: (() => void)[];
 
     constructor() {
         this.options = new Map();
+        this.closedCallbacks = new Array();
     }
 
     addConfigOption(lable: string, config: ConfigUnion): Config {
         this.options.set(lable, config);
         return this;
+    }
+
+    addClosedCallback(fn: () => void): Config {
+        this.closedCallbacks.push(fn);
+        return this;
+    }
+
+    serializeToJson(): jsonBlob {
+        let retObj: jsonBlob = {};
+        for (const [name, config] of this.options) {
+            retObj[name] = config.getDefault();
+        }
+        return retObj;
+    }
+
+    loadFromJson(baseObj: jsonBlob) {
+        for (const key in baseObj) {
+            const val = baseObj[key];
+            if (!this.options.has(key)) {
+                console.warn("Unknown Config Key: {}. with value: {}. Skipping!", key, val);
+            }
+            this.options.get(key)!.setObjValue(val);
+        }
     }
 
     async show(target: Player) {
@@ -182,6 +247,10 @@ class Config {
                     this.addTextField(name, type as TextConfig, form);
                     break;
                 }
+                case FieldType.NumberInput: {
+                    this.addNumberInputConfig(name, type as NumberInputConfig, form);
+                    break;
+                }
             }
         }
         form.title("Config");
@@ -190,6 +259,8 @@ class Config {
             return;
         }
         this.dispatchUpdateCalls(response.formValues!);
+        saveConfig();
+        this.closedCallbacks.forEach((ele) => ele());
     }
 
     private dispatchUpdateCalls(values: (boolean | number | string)[]) {
@@ -220,6 +291,10 @@ class Config {
 
     private addTextField(lable: string, textConfig: TextConfig, form: ModalFormData) {
         form.textField(lable, textConfig.getPlaceHolder(), textConfig.getDefault());
+    }
+
+    private addNumberInputConfig(lable: string, numberConfig: NumberInputConfig, form: ModalFormData) {
+        form.textField(lable, numberConfig.getDefault(), numberConfig.getDefault());
     }
 }
 

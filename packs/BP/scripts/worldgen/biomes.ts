@@ -1,8 +1,9 @@
 import { Dimension, world } from "@minecraft/server";
 import { Biome, biomeManager, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
 import { Vec3 } from "./Vec";
-const TALL_THRESHHOLD = 0.96;
-const GRASS_THRESHHOLD = 0.86;
+import { random } from "./random";
+const TALL_THRESHHOLD = 0.97;
+const GRASS_THRESHHOLD = 0.80;
 const SHRUB_THRESHHOLD = 0.9;
 
 class Planes extends Biome {
@@ -22,7 +23,7 @@ class Planes extends Biome {
     }
 
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > GRASS_THRESHHOLD && seed < TALL_THRESHHOLD) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "short_grass");
         } else if (seed > TALL_THRESHHOLD) {
@@ -36,7 +37,7 @@ class FrozenPlanes extends Biome {
 
         this.id = "custom:frozen_planes";
         this.surfaceBlock = "snow";
-        this.underGround = "dirt";
+        this.underGround = "snow";
         this.caveBlock = "stone";
         this.surfaceNeedsSupport = false;
         this.multiLayerSurface = false;
@@ -47,7 +48,7 @@ class FrozenPlanes extends Biome {
     }
 
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > 0.8) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "snow_layer");
         }
@@ -71,7 +72,7 @@ class Desert extends Biome {
     }
 
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > SHRUB_THRESHHOLD) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "deadbush");
         }
@@ -108,12 +109,12 @@ class FrozenMountian extends Biome {
         this.multiLayerSurface = false;
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
-        this.heightBias = HeightBias.REALLY_HIGH;
-        this.moistureBias = MoistureSelections.Wet;
+        this.heightBias = HeightBias.HIGH;
+        this.moistureBias =  MoistureSelections.Wet;
     }
 
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > 0.8) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "snow_layer");
         }
@@ -163,5 +164,5 @@ export function registerBiomes() {
     biomeManager.addBiome(new FrozenPlanes());
     biomeManager.addBiome(new SandMountian());
     biomeManager.addBiome(new FrozenMountian());
-    biomeManager.addBiome(new SandMountianTall());
+    //biomeManager.addBiome(new SandMountianTall());
 }

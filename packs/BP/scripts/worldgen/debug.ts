@@ -5,6 +5,8 @@ import { mainLocation } from "../main";
 import { ChunkPosition } from "./chunk";
 import { CacheClearLimit } from "./cache";
 import { terrainConfig, ToggleConfig } from "./config";
+import { biomeManager } from "./biome";
+import { renderRandomDebug } from "./random";
 
 class DebugRendering {
     private lineList: String[];
@@ -42,7 +44,9 @@ class DebugRendering {
 }
 
 export let renderDebug = true;
-export let showCacheSizes = true;
+export let showCacheSizes = false;
+export let showBiomeStack = true;
+export let showNoise = false;
 
 export function initDebugConfig() {
     terrainConfig
@@ -63,6 +67,24 @@ export function initDebugConfig() {
                 },
                 (val) => (showCacheSizes = val)
             )
+        )
+        .addConfigOption(
+            "Enable Biome Selection Information",
+            new ToggleConfig(
+                () => {
+                    return showBiomeStack;
+                },
+                (val) => (showBiomeStack = val)
+            )
+        )
+        .addConfigOption(
+            "Enable Biome Noise Information",
+            new ToggleConfig(
+                () => {
+                    return showNoise;
+                },
+                (val) => (showNoise = val)
+            )
         );
 }
 
@@ -76,10 +98,9 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
             .update(
                 "Chunk Position",
                 Vector2ToString(ChunkPosition.fromWorld(new Vec2(mainLocation.x, mainLocation.z)))
-            )
-            .update("Climate", `${chunkNoiseProvider.getClimateNoiseFull(mainLocation)}`)
-            .update("Tie Breaker", `${chunkNoiseProvider.getTieBreakerNoiseFull(mainLocation)}`)
-            .update("Moisture", `${chunkNoiseProvider.getMoistureNoiseFull(mainLocation)}`);
+            );
+            renderRandomDebug();
+
         if (showCacheSizes) {
             debug
                 .update("World Cache Size", chunkNoiseProvider.chunkHeightmap.size)
@@ -88,6 +109,23 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 .update("Moisture Cache Size", chunkNoiseProvider.moistureCache.size)
                 .update("Total Cache Size", `${chunkNoiseProvider.getTotalCacheSize()} Out Of ${CacheClearLimit}`);
         }
+        if (showNoise) {
+            debug
+                .update("Climate", `${chunkNoiseProvider.getClimateNoiseFull(mainLocation)}`)
+                .update("Tie Breaker", `${chunkNoiseProvider.getTieBreakerNoiseFull(mainLocation)}`)
+                .update("Moisture", `${chunkNoiseProvider.getMoistureNoiseFull(mainLocation)}`)
+                .update("Height", `${chunkNoiseProvider.getHeightNoiseFull(mainLocation)}`);
+        }
+        if (showBiomeStack) {
+            biomeManager.getBiomeIndexNew(
+                chunkNoiseProvider.getClimateNoiseFull(mainLocation),
+                chunkNoiseProvider.getHeightNoiseFull(mainLocation),
+                chunkNoiseProvider.getTieBreakerNoiseFull(mainLocation),
+                chunkNoiseProvider.getMoistureNoiseFull(mainLocation),
+                true
+            );
+        }
+
 
         dim.runCommandAsync(`titleraw ${player.name} clear`);
         dim.runCommandAsync(`titleraw ${player.name} actionbar {"rawtext":[{"text": "${debug.build()}"}]}`);

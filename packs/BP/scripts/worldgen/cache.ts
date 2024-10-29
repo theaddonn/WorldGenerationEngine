@@ -71,8 +71,8 @@ export function initLimits() {
 
 let cleanupRunning = false;
 
-export function performCacheCleanup() {
-    if (chunkNoiseProvider.getTotalCacheSize() > CacheClearLimit && !cleanupRunning) {
+export function performCacheCleanup(force?: boolean) {
+    if ((chunkNoiseProvider.getTotalCacheSize() > CacheClearLimit && !cleanupRunning) || force) {
         cleanupRunning = true;
         runJob(
             chunkNoiseProvider.dropUselessInfo(ChunkPosition.from3D(mainLocation), KeepPercent, () => {
@@ -81,3 +81,4 @@ export function performCacheCleanup() {
         );
     }
 }
+
