@@ -1,4 +1,4 @@
-import { Block, Vector2 } from "@minecraft/server";
+import { Block, Vector2, Vector3 } from "@minecraft/server";
 import { ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 
 export class BlockPosition {
@@ -24,6 +24,14 @@ export class BlockPosition {
     toLocalChunk(): LocalChunkPosition {
         return new LocalChunkPosition(this.x % SUBCHUNK_SIZE, this.y % SUBCHUNK_SIZE);
     }
+}
+
+export function chunkAndYToLocation(chunk: Vector2, y: number): Vector3 {
+    return { x: chunk.x * SUBCHUNK_SIZE, y: y, z: chunk.y * SUBCHUNK_SIZE };
+}
+
+export function chunkOffsetY(chunk: Vector2, offset: Vector2, y: number) {
+    return { x: (chunk.x * SUBCHUNK_SIZE) + offset.x, y: y, z: (chunk.y * SUBCHUNK_SIZE) + offset.y };
 }
 
 export const WorldGenBlockTypes = ["deepslate", "stone", "dirt", "grass", "short_grass", "air"];

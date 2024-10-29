@@ -1,10 +1,10 @@
 import { Dimension, world } from "@minecraft/server";
-import { Biome, biomeManager, ClimateSelections, HeightBias } from "./biome";
+import { Biome, biomeManager, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
 import { Vec3 } from "./Vec";
-const TALL_THRESHHOLD = 0.96;
-const GRASS_THRESHHOLD = 0.86;
+import { random } from "./random";
+const TALL_THRESHHOLD = 0.97;
+const GRASS_THRESHHOLD = 0.80;
 const SHRUB_THRESHHOLD = 0.9;
-
 
 class Planes extends Biome {
     constructor() {
@@ -19,10 +19,11 @@ class Planes extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.NORMAL;
         this.heightBias = HeightBias.NORMAL;
+        this.moistureBias = MoistureSelections.Normal;
     }
 
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > GRASS_THRESHHOLD && seed < TALL_THRESHHOLD) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "short_grass");
         } else if (seed > TALL_THRESHHOLD) {
@@ -36,17 +37,18 @@ class FrozenPlanes extends Biome {
 
         this.id = "custom:frozen_planes";
         this.surfaceBlock = "snow";
-        this.underGround = "dirt";
+        this.underGround = "snow";
         this.caveBlock = "stone";
         this.surfaceNeedsSupport = false;
         this.multiLayerSurface = false;
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
         this.heightBias = HeightBias.NORMAL;
+        this.moistureBias = MoistureSelections.Wet;
     }
 
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > 0.8) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "snow_layer");
         }
@@ -54,7 +56,6 @@ class FrozenPlanes extends Biome {
 }
 
 class Desert extends Biome {
-    
     constructor() {
         super();
 
@@ -67,11 +68,11 @@ class Desert extends Biome {
         this.surfaceDepth = 3;
         this.tempBias = ClimateSelections.WARM;
         this.heightBias = HeightBias.NORMAL;
+        this.moistureBias = MoistureSelections.Dry;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > SHRUB_THRESHHOLD) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "deadbush");
         }
@@ -79,7 +80,6 @@ class Desert extends Biome {
 }
 
 class Mountian extends Biome {
-    
     constructor() {
         super();
 
@@ -90,15 +90,14 @@ class Mountian extends Biome {
         this.surfaceNeedsSupport = false;
         this.multiLayerSurface = false;
         this.surfaceDepth = 0;
-        this.tempBias = ClimateSelections.DONT_CARE;
-        this.heightBias = HeightBias.REALLY_HIGH;
+        this.tempBias = ClimateSelections.NORMAL;
+        this.heightBias = HeightBias.HIGH;
+        this.moistureBias = MoistureSelections.Normal;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {}
 }
 class FrozenMountian extends Biome {
-    
     constructor() {
         super();
 
@@ -110,19 +109,18 @@ class FrozenMountian extends Biome {
         this.multiLayerSurface = false;
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
-        this.heightBias = HeightBias.REALLY_HIGH;
+        this.heightBias = HeightBias.HIGH;
+        this.moistureBias =  MoistureSelections.Wet;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {
-        const seed = Math.random();
+        const seed = random();
         if (seed > 0.8) {
             dim.setBlockType({ x: pos.x, y: pos.y + 1, z: pos.z }, "snow_layer");
         }
     }
 }
 class SandMountian extends Biome {
-    
     constructor() {
         super();
 
@@ -135,13 +133,12 @@ class SandMountian extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.WARM;
         this.heightBias = HeightBias.HIGH;
+        this.moistureBias = MoistureSelections.Dry;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {}
 }
 class SandMountianTall extends Biome {
-    
     constructor() {
         super();
 
@@ -154,13 +151,11 @@ class SandMountianTall extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.WARM;
         this.heightBias = HeightBias.REALLY_HIGH;
+        this.moistureBias = MoistureSelections.Dry;
     }
 
-    
     decorate(pos: Vec3, dim: Dimension) {}
 }
-
-
 
 export function registerBiomes() {
     biomeManager.addBiome(new Planes());
@@ -169,5 +164,5 @@ export function registerBiomes() {
     biomeManager.addBiome(new FrozenPlanes());
     biomeManager.addBiome(new SandMountian());
     biomeManager.addBiome(new FrozenMountian());
-    biomeManager.addBiome(new SandMountianTall());
+    //biomeManager.addBiome(new SandMountianTall());
 }

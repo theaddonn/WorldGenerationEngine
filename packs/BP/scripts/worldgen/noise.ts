@@ -1,27 +1,83 @@
-import { world } from "@minecraft/server";
 import Noise from "noise-ts";
+import { NumberInputConfig, SliderConfig, terrainConfig } from "./config";
 
-export const SEED = 420 + 69;
-const NOISE = new Noise(SEED);
+let seed = 0x12321;
+let noise = new Noise(seed);
 
-let perlinNoise2DCache = new Map();
-let perlinNoise3DCache = new Map();
-let simplexNoise2DCache = new Map();
-let simplexNoise3DCache = new Map();
+let moistureSeed = 0x32117893;
+let moistureNoise = new Noise(moistureSeed);
 
-function hashStr(str: string) {
-    var hash = 0,
-        i,
-        chr;
-    if (str.length === 0) return hash;
-    for (i = 0; i < str.length; i++) {
-        chr = str.charCodeAt(i);
-        hash = (hash << 5) - hash + chr;
-        hash |= 0; // Convert to 32bit integer
-    }
-    return hash;
+let climateSeed = 0x09148605;
+let climateNoise = new Noise(climateSeed);
+
+let tieSeed = 0x3211ddde;
+let tieNoise = new Noise(tieSeed);
+
+export function initNoiseConfig() {
+    terrainConfig.addConfigOption(
+        "Terrain Shape Seed",
+        new NumberInputConfig(
+            () => {return seed;},
+            (val) => {
+                seed = val;
+                noise = new Noise(seed);
+            }
+        )
+    ).addConfigOption(
+        "Moisture Noise Seed",
+        new NumberInputConfig(
+            () => {return moistureSeed;},
+            (val) => {
+                moistureSeed = val;
+                moistureNoise = new Noise(seed);
+            }
+        )
+    ).addConfigOption(
+        "Climate Noise Seed",
+        new NumberInputConfig(
+            () => {return climateSeed;},
+            (val) => {
+                climateSeed = val;
+                climateNoise = new Noise(climateSeed);
+            }
+        )
+    ).addConfigOption(
+        "Tie Noise Seed",
+        new NumberInputConfig(
+            () => {return tieSeed;},
+            (val) => {
+                tieSeed = val;
+                tieNoise = new Noise(tieSeed);
+            }
+        )
+    )
 }
 
+function PerlinNoise2DRaw(
+    x: number,
+    y: number,
+    amplitude: number,
+    frequency: number,
+    octaveCount: number,
+    persistence: number,
+    lacunarity: number,
+    rawAmplitude: number,
+    perlinCaller: Noise,
+    perlinSeed: number
+): number[] {
+    let value = 0;
+    let raw = 0;
+    for (let i = 0; i < octaveCount; i++) {
+        let offset = +(perlinSeed * i);
+        const trueNoise = perlinCaller.perlin2(x * frequency + offset, y * frequency + offset);
+        raw += rawAmplitude * trueNoise;
+        value += amplitude * trueNoise;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+        rawAmplitude *= persistence;
+    }
+    return [value, raw];
+}
 export function PerlinNoise2D(
     x: number,
     y: number,
@@ -32,86 +88,31 @@ export function PerlinNoise2D(
     lacunarity: number,
     rawAmplitude: number
 ): number[] {
-    let value = 0;
-    let raw = 0;
-    for (let i = 0; i < octaveCount; i++) {
-        let offset = +(SEED * i);
-        const trueNoise = NOISE.perlin2(x * frequency + offset, y * frequency + offset);
-        raw += rawAmplitude * trueNoise;
-        value += amplitude * trueNoise;
-        amplitude *= persistence;
-        frequency *= lacunarity;
-        rawAmplitude *= persistence;
-    }
-    return [value, raw];
+    return PerlinNoise2DRaw(
+        x,
+        y,
+        amplitude,
+        frequency,
+        octaveCount,
+        persistence,
+        lacunarity,
+        rawAmplitude,
+        noise,
+        seed
+    );
 }
 
-export function singlePerlin2D(x: number, y: number, freq: number) {
-    const offset = +(SEED * 200);
-    return (NOISE.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
+export function singlePerlin2D(x: number, y: number, freq: number, coreOffset?: number) {
+    const offset = +(seed * (coreOffset ?? 200));
+    return (noise.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
+}
+export function pollMoistureNoise2D(x: number, y: number, freq: number) {
+    return (moistureNoise.perlin2(-x * freq, -y * freq) + 1) / 2;
 }
 
-export function PerlinNoise3D(
-    x: number,
-    y: number,
-    z: number,
-    amplitude: number,
-    frequency: number,
-    octaveCount: number,
-    persistence: number,
-    lacunarity: number
-) {
-    let value = 0;
-
-    for (let i = 0; i < octaveCount; i++) {
-        let offset = +(SEED * i);
-        value += amplitude * NOISE.perlin3(x * frequency + offset, y * frequency + offset, z * frequency + offset);
-        amplitude *= persistence;
-        frequency *= lacunarity;
-    }
-
-    return value;
+export function pollClimateNoise2D(x: number, y: number, freq: number) {
+    return (PerlinNoise2DRaw(x, y, 0, freq, 2, 0.6, 1.8, 0.9, climateNoise, climateSeed)[1] + 1) / 2;
 }
-
-export function SimplexNoise2D(
-    x: number,
-    y: number,
-    amplitude: number,
-    frequency: number,
-    octaveCount: number,
-    persistence: number,
-    lacunarity: number
-) {
-    let value = 0;
-
-    for (let i = 0; i < octaveCount; i++) {
-        let offset = +(SEED * i);
-        value += amplitude * NOISE.simplex2(x * frequency + offset, y * frequency + offset);
-        amplitude *= persistence;
-        frequency *= lacunarity;
-    }
-
-    return value;
-}
-
-export function SimplexNoise3D(
-    x: number,
-    y: number,
-    z: number,
-    amplitude: number,
-    frequency: number,
-    octaveCount: number,
-    persistence: number,
-    lacunarity: number
-) {
-    let value = 0;
-
-    for (let i = 0; i < octaveCount; i++) {
-        let offset = +(SEED * i);
-        value += amplitude * NOISE.simplex3(x * frequency + offset, y * frequency + offset, z * frequency + offset);
-        amplitude *= persistence;
-        frequency *= lacunarity;
-    }
-
-    return value;
+export function pollTieNoise2D(x: number, y: number, freq: number) {
+    return (tieNoise.perlin2(x * freq, y * freq) + 1) / 2;
 }
