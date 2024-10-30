@@ -1,6 +1,6 @@
 import { MemoryTier, system, world } from "@minecraft/server";
 import { runJob } from "../job";
-import { chunkNoiseProvider } from "./ChunkNoiseProvider";
+import { chunkNoiseProvider } from "./chunkNoiseProvider";
 import { ChunkPosition } from "./chunk";
 import { mainLocation } from "../main";
 import { terrainConfig, TextConfig } from "./config";

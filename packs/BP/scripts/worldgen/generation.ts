@@ -1,6 +1,6 @@
 import { Dimension, Player, Vector2, world } from "@minecraft/server";
 import { buildChunk, CHUNK_RANGE, ChunkPosition } from "./chunk";
-import { Vec2, Vec3, Vector2ToString } from "./Vec";
+import { Vec2, Vec3, Vector2ToString } from "./vec";
 import { runJob } from "../job";
 import { debug } from "./debug";
 import { SliderConfig, terrainConfig } from "./config";

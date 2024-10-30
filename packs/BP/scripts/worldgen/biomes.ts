@@ -1,6 +1,6 @@
 import { Dimension, world } from "@minecraft/server";
 import { Biome, biomeManager, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
-import { Vec3 } from "./Vec";
+import { Vec3 } from "./vec";
 import { random } from "./random";
 
 const TALL_THRESHHOLD = 0.97;

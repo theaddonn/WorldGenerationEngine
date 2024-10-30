@@ -2,7 +2,7 @@ import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
 import { Chunk, ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { idx2D } from "./util";
 import { PerlinNoise2D, pollClimateNoise2D, pollMoistureNoise2D, pollTieNoise2D, singlePerlin2D } from "./noise";
-import { Vec2, Vector2ToString } from "./Vec";
+import { Vec2, Vector2ToString } from "./vec";
 import { BlockPosition } from "./block";
 import { biomeManager } from "./biome";
 import { FloatSliderConfig, SliderConfig, terrainConfig } from "./config";

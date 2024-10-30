@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 import { Biome, biomeManager } from "./biome";
 import { structureRegistry, WGEStructure } from "./structure";
-import { Vec2, Vec3, Vector3ToString } from "./Vec";
+import { Vec2, Vec3, Vector3ToString } from "./vec";
 import { random } from "./random";
 
 class Tree implements WGEStructure {

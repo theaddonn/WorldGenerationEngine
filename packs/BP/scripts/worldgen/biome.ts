@@ -1,7 +1,7 @@
 import { Dimension, world } from "@minecraft/server";
 import { clamp, throwError } from "./util";
-import { Vec3 } from "./Vec";
-import { HEIGHT_MAX } from "./ChunkNoiseProvider";
+import { Vec3 } from "./vec";
+import { HEIGHT_MAX } from "./chunkNoiseProvider";
 import { debug } from "./debug";
 import { FloatSliderConfig, terrainConfig } from "./config";
 

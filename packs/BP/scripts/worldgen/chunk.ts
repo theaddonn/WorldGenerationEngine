@@ -1,7 +1,7 @@
 import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
-import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./Vec";
+import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./vec";
 import { BlockPosition, chunkAndYToLocation, chunkOffsetY } from "./block";
-import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
+import { chunkNoiseProvider, pollNoise2D } from "./chunkNoiseProvider";
 import { biomeManager } from "./biome";
 import { advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
 import { NumberInputConfig, terrainConfig, ToggleConfig } from "./config";

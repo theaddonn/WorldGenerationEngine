@@ -1,6 +1,6 @@
 import { Dimension, Player } from "@minecraft/server";
-import { chunkNoiseProvider } from "./ChunkNoiseProvider";
-import { Vec2, Vector2ToString } from "./Vec";
+import { chunkNoiseProvider } from "./chunkNoiseProvider";
+import { Vec2, Vector2ToString } from "./vec";
 import { mainLocation } from "../main";
 import { ChunkPosition } from "./chunk";
 import { CacheClearLimit } from "./cache";
