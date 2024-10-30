@@ -129,6 +129,7 @@ export function saveVisitedCaches() {
 
     writeStringToWorld("VISITED_CHUNK_MARKERS", JSON.stringify(blob));
 }
+
 export function loadVisitedCaches() {
     visitedChunks = new Map<String, ChunkStage>();
 

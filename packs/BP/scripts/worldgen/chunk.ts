@@ -79,6 +79,7 @@ export class PlaneArray {
     get(pos: Vector2 | Vector3) {
         return this.raw[pos.y * this.width + pos.x];
     }
+
     set(pos: Vector2 | Vector3, val: number) {
         this.raw[pos.y * this.width + pos.x] = val;
     }
@@ -162,9 +163,11 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
                 }
                 heights[idx] = height;
             }
+
             let finished = false;
             const biome = noise.getBiome(new Vec2(x, z));
             const surfaceOffset = biomeManager.surfaceOffset(biome);
+            
             for (let offset = 1; !finished; offset++) {
                 let shouldFill = false;
                 for (const height of heights) {
@@ -201,6 +204,7 @@ function* surface(pos: ChunkPosition, dim: Dimension, yeildEnabled: boolean = fa
         if (biomeManager.support(biome)) {
             dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
         }
+        
         if (yeildEnabled) {
             yield;
         }
@@ -223,16 +227,21 @@ function* structure(
                 if (validArray.get(new Vec2(x, z)) !== 0) {
                     continue;
                 }
+                
                 var skip = structureRegistry.spawnStructure(
                     biomeManager.getBiome(cache.getBiome(new Vec2(x, z))),
                     chunkOffsetY(pos, new Vec2(x, z), cache.get(new Vec2(x, z))),
                     dim
                 );
+                
                 yield;
+                
                 if (skip === undefined) {
                     continue;
                 }
+
                 hardPassNeeded = true;
+                
                 for (let x_sub = x - skip.low.x; x_sub < x + skip.high.x + 1; x_sub++) {
                     for (let z_sub = z - skip.low.y; z_sub < z + skip.high.y + 1; z_sub++) {
                         validArray.set(
@@ -261,6 +270,7 @@ function* structure(
         }
 
         yield;
+
         lastFinishedStage = advanceStage(pos, lastFinishedStage);
     }
 
@@ -273,7 +283,9 @@ function* structure(
             bailGeneration(pos);
             return;
         }
+
         lastFinishedStage = advanceStage(pos, lastFinishedStage);
+        
         yield;
     } else {
         lastFinishedStage = advanceStage(pos, lastFinishedStage);

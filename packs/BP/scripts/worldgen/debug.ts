@@ -109,6 +109,7 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 .update("Moisture Cache Size", chunkNoiseProvider.moistureCache.size)
                 .update("Total Cache Size", `${chunkNoiseProvider.getTotalCacheSize()} Out Of ${CacheClearLimit}`);
         }
+
         if (showNoise) {
             debug
                 .update("Climate", `${chunkNoiseProvider.getClimateNoiseFull(mainLocation)}`)
@@ -116,6 +117,7 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 .update("Moisture", `${chunkNoiseProvider.getMoistureNoiseFull(mainLocation)}`)
                 .update("Height", `${chunkNoiseProvider.getHeightNoiseFull(mainLocation)}`);
         }
+        
         if (showBiomeStack) {
             biomeManager.getBiomeIndexNew(
                 chunkNoiseProvider.getClimateNoiseFull(mainLocation),

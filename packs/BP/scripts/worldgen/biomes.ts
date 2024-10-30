@@ -98,6 +98,7 @@ class Mountian extends Biome {
 
     decorate(pos: Vec3, dim: Dimension) {}
 }
+
 class FrozenMountian extends Biome {
     constructor() {
         super();
@@ -121,6 +122,7 @@ class FrozenMountian extends Biome {
         }
     }
 }
+
 class SandMountian extends Biome {
     constructor() {
         super();
@@ -139,6 +141,7 @@ class SandMountian extends Biome {
 
     decorate(pos: Vec3, dim: Dimension) {}
 }
+
 class SandMountianTall extends Biome {
     constructor() {
         super();
