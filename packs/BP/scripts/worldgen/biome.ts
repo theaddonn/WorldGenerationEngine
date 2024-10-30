@@ -6,13 +6,13 @@ import { debug } from "./debug";
 import { FloatSliderConfig, terrainConfig } from "./config";
 
 export enum ClimateSelections {
-
     COLD = 0.3,
     NORMAL = 0.5,
     WARM = 0.75,
     BOILING = 1.0,
     DONT_CARE = 0.0,
 }
+
 export enum MoistureSelections {
     Soaking = 0,
     Wet = 0.4,
@@ -20,7 +20,6 @@ export enum MoistureSelections {
     Dry = 0.7,
     None = 1
 };
-
 
 export enum HeightBias {
     LOW = 0.3, // Means it must be between the bottom of the noise and 1 third the way up the terrain
@@ -45,12 +44,12 @@ export abstract class Biome {
     abstract decorate(pos: Vec3, dim: Dimension): void;
 }
 
-
 let heightWeight = 1.0;
 let tempWeight = 1.1;
 let moistureWeight = 1.1;
 
 let errMargin = 0.00001;
+
 export function initBiomeConfig() {
     terrainConfig.addConfigOption(
         "Height Bias",
@@ -94,7 +93,6 @@ export function initBiomeConfig() {
         )
     );
 }
-
 
 class BiomeList {
     private biomes: Biome[];

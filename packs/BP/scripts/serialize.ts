@@ -103,6 +103,7 @@ export function readStringFromWorld(key: string, enableLog?: boolean): string | 
     }
     return retStr;
 }
+
 export function deleteWorldInfo(key: string) {
     const chunkCount = world.getDynamicProperty(`${key}_count`) as number | undefined;
     if (chunkCount === undefined) {return;}

@@ -86,6 +86,7 @@ export function initChunkNoiseProviderConfig() {
 
 export let HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
 export let HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
+
 class ChunkNoise {
     values: Int16Array;
     biomeIndex: Int16Array;
@@ -163,6 +164,7 @@ class ChunkNoiseProvider {
     getCache(pos: ChunkPosition): ChunkNoise {
         return this.chunkHeightmap.get(Vector2ToString(pos))!;
     }
+    
     private populateHeightNoise(base: Vector2, heightmap: Int16Array) {
         let largest = -21213890;
         let smallest = 13721987938;
@@ -201,6 +203,7 @@ class ChunkNoiseProvider {
         }
         this.tieCache.set(Vector2ToString(ChunkPosition.fromWorld(base)), tieNoise);
     }
+
     private populateMoistureNoise(base: Vector2, moistureNoise: Float32Array) {
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
@@ -219,11 +222,13 @@ class ChunkNoiseProvider {
             return cache[idx2D(Local)];
         }
     }
+
     getClimateNoiseFull(fullPos: Vector3): number {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         return this.getClimateNoise(chunkPos, local);
     }
+
     getHeightNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
         const cache = this.chunkHeightmap.get(Vector2ToString(Chunk));
         if (cache === undefined) {
@@ -232,6 +237,7 @@ class ChunkNoiseProvider {
             return cache.get(Local);
         }
     }
+
     getHeightNoiseFull(fullPos: Vector3): number {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
@@ -247,12 +253,14 @@ class ChunkNoiseProvider {
             return cache.getBiome(Local);
         }
     }
+
     getBiomeFull(fullPos: Vector3): number {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         return this.getBiome(chunkPos, local);
 
-    } 
+    }
+
     getMoistureNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
         const cache = this.moistureCache.get(Vector2ToString(Chunk));
         if (cache === undefined) {
@@ -261,6 +269,7 @@ class ChunkNoiseProvider {
             return cache[idx2D(Local)];
         }
     }
+
     getMoistureNoiseFull(fullPos: Vector3): number {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
@@ -275,6 +284,7 @@ class ChunkNoiseProvider {
             return cache[idx2D(Local)];
         }
     }
+
     getTieBreakerNoiseFull(fullPos: Vector3): number {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });

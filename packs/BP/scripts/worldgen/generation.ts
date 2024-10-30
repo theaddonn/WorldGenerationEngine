@@ -24,6 +24,7 @@ export function initGenConfig() {
         )
     );
 }
+
 export let currentChunkBuildCount = 0;
 
 export function removeChunk() {
@@ -31,6 +32,7 @@ export function removeChunk() {
 
     for (; currentChunkBuildCount < 0; currentChunkBuildCount++) {}
 }
+
 export function addWorkingChunk(pos: ChunkPosition) {
     workingChunks.add(Vector2ToString(pos));
     currentChunkBuildCount++;
@@ -50,6 +52,7 @@ export enum ChunkStage {
     HardSurface,
     Finished,
 }
+
 export let visitedChunks: Map<String, ChunkStage>;
 export let workingChunks = new Set<string>();
 
@@ -63,6 +66,7 @@ export function finishChunk(pos: ChunkPosition, state: ChunkStage) {
     if (state + 1 !== ChunkStage.Finished) {
         world.sendMessage(`Stage when finished doesnt equal finished ${state} ${ChunkStage.Finished}`);
     }
+
     advanceStage(pos, state);
     workingChunks.delete(Vector2ToString(pos));
     removeChunk();
@@ -70,14 +74,18 @@ export function finishChunk(pos: ChunkPosition, state: ChunkStage) {
 
 function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
     debug.update(`Queue out of ${MAX_BUILDING_CHUNKS}`, currentChunkBuildCount);
+    
     if (workingChunks.has(Vector2ToString(pos))) {
         return;
     }
+    
     if (currentChunkBuildCount >= MAX_BUILDING_CHUNKS) {
         return;
     }
+    
     let isMidState = true;
     let visitState = visitedChunks.get(Vector2ToString(pos));
+    
     if (visitState === undefined) {
         isMidState = false;
         visitState = ChunkStage.None;
@@ -93,6 +101,7 @@ function dispatchChunkGen(pos: ChunkPosition, dim: Dimension) {
 export function managePlayer(player: Player, dim: Dimension) {
     const playerChunk = ChunkPosition.fromWorld(new Vec2(player.location.x, player.location.z));
     let queue = new Array<ChunkPosition>();
+    
     for (let x = -CHUNK_RANGE; x < CHUNK_RANGE; x++) {
         for (let z = -CHUNK_RANGE; z < CHUNK_RANGE; z++) {
             queue.push(new ChunkPosition(playerChunk.x + x, playerChunk.y + z));
@@ -102,6 +111,7 @@ export function managePlayer(player: Player, dim: Dimension) {
     queue.sort((a, b) => {
         let aDist = playerChunk.distance(a);
         let bDist = playerChunk.distance(b);
+    
         return aDist - bDist;
     });
 
@@ -112,18 +122,23 @@ export function managePlayer(player: Player, dim: Dimension) {
 
 export function saveVisitedCaches() {
     let blob: jsonBlob = {};
+    
     for (const [key, stage] of visitedChunks) {
         blob[key as string] = stage;
     }
+    
     writeStringToWorld("VISITED_CHUNK_MARKERS", JSON.stringify(blob));
 }
 export function loadVisitedCaches() {
     visitedChunks = new Map<String, ChunkStage>();
+    
     const visitedBlob = readStringFromWorld("VISITED_CHUNK_MARKERS");
+    
     if (visitedBlob === undefined) {
         console.log(`No Saved Chunks In Cache. Assuming New World`);
         return;
     }
+    
     const out = JSON.parse(visitedBlob);
 
     for (const key in out) {

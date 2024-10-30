@@ -8,10 +8,12 @@ import { NumberInputConfig, terrainConfig, ToggleConfig } from "./config";
 import { structureRegistry } from "./structure";
 import { renderDebug } from "./debug";
 import { clamp } from "./util";
+
 export let CHUNK_RANGE = 1;
 export let SUBCHUNK_SIZE = 16;
 
 let renderSAM = false;
+
 export function initChunkConfig() {
     terrainConfig.addConfigOption(
         "Render Structure Avoidance Map",

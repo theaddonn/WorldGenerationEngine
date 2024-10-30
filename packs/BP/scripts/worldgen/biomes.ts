@@ -2,6 +2,7 @@ import { Dimension, world } from "@minecraft/server";
 import { Biome, biomeManager, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
 import { Vec3 } from "./Vec";
 import { random } from "./random";
+
 const TALL_THRESHHOLD = 0.97;
 const GRASS_THRESHHOLD = 0.80;
 const SHRUB_THRESHHOLD = 0.9;

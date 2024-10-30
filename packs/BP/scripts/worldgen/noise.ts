@@ -78,6 +78,7 @@ function PerlinNoise2DRaw(
     }
     return [value, raw];
 }
+
 export function PerlinNoise2D(
     x: number,
     y: number,
@@ -106,6 +107,7 @@ export function singlePerlin2D(x: number, y: number, freq: number, coreOffset?: 
     const offset = +(seed * (coreOffset ?? 200));
     return (noise.perlin2(x * freq + offset, y * freq + offset) + 1) / 2;
 }
+
 export function pollMoistureNoise2D(x: number, y: number, freq: number) {
     return (moistureNoise.perlin2(-x * freq, -y * freq) + 1) / 2;
 }
@@ -113,6 +115,7 @@ export function pollMoistureNoise2D(x: number, y: number, freq: number) {
 export function pollClimateNoise2D(x: number, y: number, freq: number) {
     return (PerlinNoise2DRaw(x, y, 0, freq, 2, 0.6, 1.8, 0.9, climateNoise, climateSeed)[1] + 1) / 2;
 }
+
 export function pollTieNoise2D(x: number, y: number, freq: number) {
     return (tieNoise.perlin2(x * freq, y * freq) + 1) / 2;
 }

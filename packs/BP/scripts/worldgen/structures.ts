@@ -34,6 +34,7 @@ class Tree implements WGEStructure {
     maySpawn(_: Biome, __: Vector3): boolean {
         return random() < this.weight;
     }
+
     skipFromCenter(): { low: Vector2; high: Vector2; } {
         return {
             low: this.low,
@@ -48,7 +49,6 @@ class Tree implements WGEStructure {
         }
     }
 }
-
 
 export function registerStructures() {
     structureRegistry

@@ -27,6 +27,7 @@ export function initRandom() {
     const obj = countFloats(randArray);
     console.log(`${obj.smallCount} ${obj.largeCount}`)
 }
+
 export function renderRandomDebug() {
     debug.update("Random Index", pollIndex);
 }
@@ -35,5 +36,3 @@ export function random(): number {
     pollIndex = (pollIndex + 1) & 0x3FFFF;
     return randArray[pollIndex];
 }
-
-

@@ -48,5 +48,4 @@ class StructureManager {
     }
 }
 
-
-export let structureRegistry = new StructureManager(); 
+export let structureRegistry = new StructureManager();
