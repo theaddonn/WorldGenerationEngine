@@ -164,7 +164,7 @@ class ChunkNoiseProvider {
     getCache(pos: ChunkPosition): ChunkNoise {
         return this.chunkHeightmap.get(Vector2ToString(pos))!;
     }
-    
+
     private populateHeightNoise(base: Vector2, heightmap: Int16Array) {
         let largest = -21213890;
         let smallest = 13721987938;
@@ -242,8 +242,7 @@ class ChunkNoiseProvider {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         return this.getHeightNoise(chunkPos, local);
-
-    } 
+    }
 
     getBiome(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
         const cache = this.chunkHeightmap.get(Vector2ToString(Chunk));
@@ -258,7 +257,6 @@ class ChunkNoiseProvider {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         return this.getBiome(chunkPos, local);
-
     }
 
     getMoistureNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {

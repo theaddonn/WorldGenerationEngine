@@ -16,10 +16,10 @@ export enum ClimateSelections {
 export enum MoistureSelections {
     Soaking = 0,
     Wet = 0.4,
-    Normal = .5,
+    Normal = 0.5,
     Dry = 0.7,
-    None = 1
-};
+    None = 1,
+}
 
 export enum HeightBias {
     LOW = 0.3, // Means it must be between the bottom of the noise and 1 third the way up the terrain
@@ -51,47 +51,59 @@ let moistureWeight = 1.1;
 let errMargin = 0.00001;
 
 export function initBiomeConfig() {
-    terrainConfig.addConfigOption(
-        "Height Bias",
-        new FloatSliderConfig(
-            0.,
-            10,
-            0.1,
-            10,
-            () => {return heightWeight;},
-            (val) => heightWeight = val
+    terrainConfig
+        .addConfigOption(
+            "Height Bias",
+            new FloatSliderConfig(
+                0,
+                10,
+                0.1,
+                10,
+                () => {
+                    return heightWeight;
+                },
+                (val) => (heightWeight = val)
+            )
         )
-    ).addConfigOption(
-        "Temp Bias",
-        new FloatSliderConfig(
-            0.,
-            10,
-            0.1,
-            10,
-            () => {return tempWeight;},
-            (val) => tempWeight = val
+        .addConfigOption(
+            "Temp Bias",
+            new FloatSliderConfig(
+                0,
+                10,
+                0.1,
+                10,
+                () => {
+                    return tempWeight;
+                },
+                (val) => (tempWeight = val)
+            )
         )
-    ).addConfigOption(
-        "Moisture Bias",
-        new FloatSliderConfig(
-            0.,
-            10,
-            0.1,
-            10,
-            () => {return moistureWeight;},
-            (val) => moistureWeight = val
+        .addConfigOption(
+            "Moisture Bias",
+            new FloatSliderConfig(
+                0,
+                10,
+                0.1,
+                10,
+                () => {
+                    return moistureWeight;
+                },
+                (val) => (moistureWeight = val)
+            )
         )
-    ).addConfigOption(
-        "Biome Error Margine",
-        new FloatSliderConfig(
-            0.00001,
-            0.1,
-            0.00002,
-            100_000,
-            () => {return errMargin;},
-            (val) => errMargin = Math.round(val)
-        )
-    );
+        .addConfigOption(
+            "Biome Error Margine",
+            new FloatSliderConfig(
+                0.00001,
+                0.1,
+                0.00002,
+                100_000,
+                () => {
+                    return errMargin;
+                },
+                (val) => (errMargin = Math.round(val))
+            )
+        );
 }
 
 class BiomeList {
@@ -129,13 +141,19 @@ class BiomeList {
         }
     }
 
-    getBiomeIndexNew(climate: number, height: number, tieBreaker: number, moisture: number, renderDebug?: boolean): number {
+    getBiomeIndexNew(
+        climate: number,
+        height: number,
+        tieBreaker: number,
+        moisture: number,
+        renderDebug?: boolean
+    ): number {
         const currentHeight = this.getHeight(height);
         tieBreaker = clamp(tieBreaker, 0, 1);
 
         let possibleBiomes = this.getFilteredBiomes(climate, currentHeight, moisture, renderDebug);
-        if (renderDebug!== undefined && renderDebug) {
-                debug.update(`Total Possible Biomes`, possibleBiomes.length);
+        if (renderDebug !== undefined && renderDebug) {
+            debug.update(`Total Possible Biomes`, possibleBiomes.length);
         }
         if (possibleBiomes.length === 1) {
             return possibleBiomes[0];
@@ -146,8 +164,12 @@ class BiomeList {
         return possibleBiomes[selected];
     }
 
-    private getFilteredBiomes(currentClimate: number, currentHeight: number, currentMoisture: number, renderDebug?: boolean): number[] {
-
+    private getFilteredBiomes(
+        currentClimate: number,
+        currentHeight: number,
+        currentMoisture: number,
+        renderDebug?: boolean
+    ): number[] {
         let biomeDistances: { index: number; distance: number }[] = new Array();
 
         this.biomes.forEach((biome, index) => {
@@ -172,8 +194,7 @@ class BiomeList {
         for (const obj of biomeDistances) {
             if (obj.distance == bestDistance) {
                 withinMargin.push(obj.index);
-            } 
-            else if (obj.distance - errMargin < bestDistance) {
+            } else if (obj.distance - errMargin < bestDistance) {
                 withinMargin.push(obj.index);
             }
         }
@@ -187,7 +208,6 @@ class BiomeList {
         currentHeight: number,
         currentMoisture: number
     ): number {
-
         const tempDistance = tempWeight * (currentClimate - biome.tempBias);
         const moistureDistance = moistureWeight * (currentMoisture - biome.moistureBias);
 

@@ -14,43 +14,55 @@ let tieSeed = 0x3211ddde;
 let tieNoise = new Noise(tieSeed);
 
 export function initNoiseConfig() {
-    terrainConfig.addConfigOption(
-        "Terrain Shape Seed",
-        new NumberInputConfig(
-            () => {return seed;},
-            (val) => {
-                seed = val;
-                noise = new Noise(seed);
-            }
+    terrainConfig
+        .addConfigOption(
+            "Terrain Shape Seed",
+            new NumberInputConfig(
+                () => {
+                    return seed;
+                },
+                (val) => {
+                    seed = val;
+                    noise = new Noise(seed);
+                }
+            )
         )
-    ).addConfigOption(
-        "Moisture Noise Seed",
-        new NumberInputConfig(
-            () => {return moistureSeed;},
-            (val) => {
-                moistureSeed = val;
-                moistureNoise = new Noise(seed);
-            }
+        .addConfigOption(
+            "Moisture Noise Seed",
+            new NumberInputConfig(
+                () => {
+                    return moistureSeed;
+                },
+                (val) => {
+                    moistureSeed = val;
+                    moistureNoise = new Noise(seed);
+                }
+            )
         )
-    ).addConfigOption(
-        "Climate Noise Seed",
-        new NumberInputConfig(
-            () => {return climateSeed;},
-            (val) => {
-                climateSeed = val;
-                climateNoise = new Noise(climateSeed);
-            }
+        .addConfigOption(
+            "Climate Noise Seed",
+            new NumberInputConfig(
+                () => {
+                    return climateSeed;
+                },
+                (val) => {
+                    climateSeed = val;
+                    climateNoise = new Noise(climateSeed);
+                }
+            )
         )
-    ).addConfigOption(
-        "Tie Noise Seed",
-        new NumberInputConfig(
-            () => {return tieSeed;},
-            (val) => {
-                tieSeed = val;
-                tieNoise = new Noise(tieSeed);
-            }
-        )
-    )
+        .addConfigOption(
+            "Tie Noise Seed",
+            new NumberInputConfig(
+                () => {
+                    return tieSeed;
+                },
+                (val) => {
+                    tieSeed = val;
+                    tieNoise = new Noise(tieSeed);
+                }
+            )
+        );
 }
 
 function PerlinNoise2DRaw(

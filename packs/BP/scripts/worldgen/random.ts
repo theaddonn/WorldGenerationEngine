@@ -8,7 +8,7 @@ function countFloats(arr) {
     let largeCount = 0;
     let smallCount = 0;
 
-    arr.forEach(num => {
+    arr.forEach((num) => {
         if (num > 0.99) {
             largeCount++;
         } else if (num < 0.1) {
@@ -25,7 +25,7 @@ export function initRandom() {
     }
 
     const obj = countFloats(randArray);
-    console.log(`${obj.smallCount} ${obj.largeCount}`)
+    console.log(`${obj.smallCount} ${obj.largeCount}`);
 }
 
 export function renderRandomDebug() {
@@ -33,6 +33,6 @@ export function renderRandomDebug() {
 }
 
 export function random(): number {
-    pollIndex = (pollIndex + 1) & 0x3FFFF;
+    pollIndex = (pollIndex + 1) & 0x3ffff;
     return randArray[pollIndex];
 }

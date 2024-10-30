@@ -31,7 +31,7 @@ export function chunkAndYToLocation(chunk: Vector2, y: number): Vector3 {
 }
 
 export function chunkOffsetY(chunk: Vector2, offset: Vector2, y: number) {
-    return { x: (chunk.x * SUBCHUNK_SIZE) + offset.x, y: y, z: (chunk.y * SUBCHUNK_SIZE) + offset.y };
+    return { x: chunk.x * SUBCHUNK_SIZE + offset.x, y: y, z: chunk.y * SUBCHUNK_SIZE + offset.y };
 }
 
 export const WorldGenBlockTypes = ["deepslate", "stone", "dirt", "grass", "short_grass", "air"];

@@ -99,7 +99,7 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 "Chunk Position",
                 Vector2ToString(ChunkPosition.fromWorld(new Vec2(mainLocation.x, mainLocation.z)))
             );
-            renderRandomDebug();
+        renderRandomDebug();
 
         if (showCacheSizes) {
             debug
@@ -125,7 +125,6 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 true
             );
         }
-
 
         dim.runCommandAsync(`titleraw ${player.name} clear`);
         dim.runCommandAsync(`titleraw ${player.name} actionbar {"rawtext":[{"text": "${debug.build()}"}]}`);

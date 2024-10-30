@@ -15,25 +15,28 @@ export let SUBCHUNK_SIZE = 16;
 let renderSAM = false;
 
 export function initChunkConfig() {
-    terrainConfig.addConfigOption(
-        "Render Structure Avoidance Map",
-        new ToggleConfig(
-            () => {return renderSAM},
-            (val) => renderSAM = val
+    terrainConfig
+        .addConfigOption(
+            "Render Structure Avoidance Map",
+            new ToggleConfig(
+                () => {
+                    return renderSAM;
+                },
+                (val) => (renderSAM = val)
+            )
         )
-    ).addConfigOption(
-        "Chunk Build Distance",
-        new NumberInputConfig(
-            () => {
-                return CHUNK_RANGE;
-            },
-            (range) => {
-                CHUNK_RANGE = range;
-            }
-        )
-    );
+        .addConfigOption(
+            "Chunk Build Distance",
+            new NumberInputConfig(
+                () => {
+                    return CHUNK_RANGE;
+                },
+                (range) => {
+                    CHUNK_RANGE = range;
+                }
+            )
+        );
 }
-
 
 export class ChunkPosition {
     x: number;
@@ -184,7 +187,6 @@ function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
     }
 }
 
-
 function* surface(pos: ChunkPosition, dim: Dimension, yeildEnabled: boolean = false): Generator<void> {
     for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
         const surfaceDepth = biomeManager.surfaceOffset(biome);
@@ -197,18 +199,20 @@ function* surface(pos: ChunkPosition, dim: Dimension, yeildEnabled: boolean = fa
         }
 
         if (biomeManager.support(biome)) {
-            dim.setBlockType(
-                { x: world.x, y: val - surfaceDepth, z: world.y },
-                biomeManager.underground(biome)
-            );
+            dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, biomeManager.underground(biome));
         }
         if (yeildEnabled) {
             yield;
-        }        
+        }
     }
 }
 
-function* structure(pos: ChunkPosition, dim: Dimension, lastFinishedStage: ChunkStage, isMidStage: boolean): Generator<void> {
+function* structure(
+    pos: ChunkPosition,
+    dim: Dimension,
+    lastFinishedStage: ChunkStage,
+    isMidStage: boolean
+): Generator<void> {
     let hardPassNeeded = false;
     if (lastFinishedStage === ChunkStage.Decorate) {
         let validArray = new PlaneArray(SUBCHUNK_SIZE, SUBCHUNK_SIZE, 0);
@@ -235,8 +239,6 @@ function* structure(pos: ChunkPosition, dim: Dimension, lastFinishedStage: Chunk
                             new Vec2(clamp(x_sub, 0, SUBCHUNK_SIZE - 1), clamp(z_sub, 0, SUBCHUNK_SIZE - 1)),
                             1
                         );
-
-
                     }
                 }
             }
@@ -264,7 +266,9 @@ function* structure(pos: ChunkPosition, dim: Dimension, lastFinishedStage: Chunk
 
     if ((hardPassNeeded && !isMidStage) || (isMidStage && ChunkStage.Structure)) {
         try {
-            for (const _ of surface(pos, dim, true)) {yield;}
+            for (const _ of surface(pos, dim, true)) {
+                yield;
+            }
         } catch {
             bailGeneration(pos);
             return;
@@ -282,7 +286,8 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStag
 
     if (lastFinishedStage === ChunkStage.None) {
         try {
-            for (const _ of surface(pos, dim)) {}
+            for (const _ of surface(pos, dim)) {
+            }
         } catch {
             bailGeneration(pos);
         }
@@ -317,13 +322,14 @@ export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStag
 
     if (lastFinishedStage === ChunkStage.Decorate) {
         try {
-            for (const _ of structure(pos, dim, lastFinishedStage, isMidStage)) {yield;}
+            for (const _ of structure(pos, dim, lastFinishedStage, isMidStage)) {
+                yield;
+            }
         } catch {
             bailGeneration(pos);
         }
         lastFinishedStage += 2;
     }
-    
-    
+
     finishChunk(pos, lastFinishedStage);
 }

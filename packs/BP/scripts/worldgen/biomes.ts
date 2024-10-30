@@ -4,7 +4,7 @@ import { Vec3 } from "./Vec";
 import { random } from "./random";
 
 const TALL_THRESHHOLD = 0.97;
-const GRASS_THRESHHOLD = 0.80;
+const GRASS_THRESHHOLD = 0.8;
 const SHRUB_THRESHHOLD = 0.9;
 
 class Planes extends Biome {
@@ -111,7 +111,7 @@ class FrozenMountian extends Biome {
         this.surfaceDepth = 0;
         this.tempBias = ClimateSelections.COLD;
         this.heightBias = HeightBias.HIGH;
-        this.moistureBias =  MoistureSelections.Wet;
+        this.moistureBias = MoistureSelections.Wet;
     }
 
     decorate(pos: Vec3, dim: Dimension) {

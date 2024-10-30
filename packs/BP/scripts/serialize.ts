@@ -106,7 +106,9 @@ export function readStringFromWorld(key: string, enableLog?: boolean): string | 
 
 export function deleteWorldInfo(key: string) {
     const chunkCount = world.getDynamicProperty(`${key}_count`) as number | undefined;
-    if (chunkCount === undefined) {return;}
+    if (chunkCount === undefined) {
+        return;
+    }
     for (let x = 0; x < chunkCount; x++) {
         world.setDynamicProperty(`${key}_chunk_${x}`, undefined);
     }

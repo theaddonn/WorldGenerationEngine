@@ -1,5 +1,12 @@
 import { Player, system, Vector3, world } from "@minecraft/server";
-import { initGenConfig, loadVisitedCaches, managePlayer, saveVisitedCaches, visitedChunks, workingChunks } from "./worldgen/generation";
+import {
+    initGenConfig,
+    loadVisitedCaches,
+    managePlayer,
+    saveVisitedCaches,
+    visitedChunks,
+    workingChunks,
+} from "./worldgen/generation";
 import { registerBiomes } from "./worldgen/biomes";
 import { terrainConfig, ToggleConfig } from "./worldgen/config";
 import { chunkNoiseProvider, initChunkNoiseProviderConfig } from "./worldgen/ChunkNoiseProvider";
@@ -42,7 +49,6 @@ function loadConfig(enableLog?: boolean) {
 }
 
 function forceDropCache() {
-    
     const location = dim.getPlayers()[0].location;
     const start = ChunkPosition.fromWorld(new Vec2(location.x, location.z));
     runJob(chunkNoiseProvider.dropUselessInfo(start, 0.0));
@@ -90,58 +96,51 @@ system.runInterval(() => {
     performCacheCleanup();
 }, 0);
 
-
 function initMainConfig() {
     let clearSaved = false;
     let forceCompaction = false;
     let dropVisited = false;
-    terrainConfig.addConfigOption(
-        "Delete Saved Config",
-        new ToggleConfig(
-            false,
-            (val) => {
+    terrainConfig
+        .addConfigOption(
+            "Delete Saved Config",
+            new ToggleConfig(false, (val) => {
                 clearSaved = val;
-            }
+            })
         )
-    ).addClosedCallback(() => {
-        if (clearSaved) {
-            clearSaved = false;
-            world.sendMessage("Clearing saved data");
-            deleteWorldInfo("WGE_CONFIG_DATA");
-            world.sendMessage("Cleared save data!");
-        }
-    }).addConfigOption(
-        "Force Cache Compaction",
-        new ToggleConfig(
-            false,
-            (val) => {
+        .addClosedCallback(() => {
+            if (clearSaved) {
+                clearSaved = false;
+                world.sendMessage("Clearing saved data");
+                deleteWorldInfo("WGE_CONFIG_DATA");
+                world.sendMessage("Cleared save data!");
+            }
+        })
+        .addConfigOption(
+            "Force Cache Compaction",
+            new ToggleConfig(false, (val) => {
                 forceCompaction = val;
+            })
+        )
+        .addClosedCallback(() => {
+            if (!forceCompaction) {
+                return;
             }
-        )
-    ).addClosedCallback(() => {
-        if (!forceCompaction) {
-            return;
-        }
-        forceCompaction = false;
-        performCacheCleanup(true);
-    }).addConfigOption(
-        "Drop Visited Caches",
-        new ToggleConfig(
-            false,
-            (val) => dropVisited=val
-        )
-    ).addClosedCallback(() => {
-        if (!dropVisited) {
-            return;
-        }
-        dropVisited = false;
-        forceDropCache();
-    });
+            forceCompaction = false;
+            performCacheCleanup(true);
+        })
+        .addConfigOption("Drop Visited Caches", new ToggleConfig(false, (val) => (dropVisited = val)))
+        .addClosedCallback(() => {
+            if (!dropVisited) {
+                return;
+            }
+            dropVisited = false;
+            forceDropCache();
+        });
 }
 
 world.afterEvents.worldInitialize.subscribe((_) => {
-    initDebugConfig();-
-    initChunkConfig();
+    initDebugConfig();
+    -initChunkConfig();
     initCacheConfig();
     initBiomeConfig();
     initNoiseConfig();
@@ -150,7 +149,6 @@ world.afterEvents.worldInitialize.subscribe((_) => {
     initMainConfig();
     loadConfig();
 });
-
 
 world.beforeEvents.playerLeave.subscribe((_) => {
     if (world.getAllPlayers().length - 1 > 0) {

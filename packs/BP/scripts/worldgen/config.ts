@@ -8,7 +8,7 @@ export enum FieldType {
     FloatSlider,
     Toggle,
     Text,
-    NumberInput
+    NumberInput,
 }
 
 interface ConfigTypeCommon {
@@ -154,14 +154,10 @@ export class NumberInputConfig implements ConfigTypeCommon {
     setValue: (val: number) => void;
     isFloat: boolean;
     type: FieldType;
-    constructor(
-        value: number | (() => number),
-        setValue: (val: number) => void,
-        isFloat: boolean = false
-    ) {
+    constructor(value: number | (() => number), setValue: (val: number) => void, isFloat: boolean = false) {
         this.value = value;
         this.setValue = setValue;
-        this.isFloat = isFloat
+        this.isFloat = isFloat;
         this.type = FieldType.NumberInput;
     }
 
@@ -169,8 +165,7 @@ export class NumberInputConfig implements ConfigTypeCommon {
         let val = 0;
         if (typeof this.value === "function") {
             val = this.value();
-        }
-        else { 
+        } else {
             val = this.value;
         }
         return val.toString();
