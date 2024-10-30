@@ -117,7 +117,7 @@ class BiomeList {
         return this.biomes.length;
     }
 
-    allbiomes(): readonly Biome[] {
+    allBiomes(): readonly Biome[] {
         return this.biomes;
     }
 
