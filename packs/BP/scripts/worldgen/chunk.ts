@@ -1,37 +1,39 @@
 import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
 import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./Vec";
-import { BlockPosition, chunkAndYToLocation, chunkOffsetY } from "./block";
-import { chunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
-import { biomeManager } from "./biome";
-import { advanceStage, bailGeneration, ChunkStage, finishChunk, removeChunk } from "./generation";
+import { BlockPosition, chunkOffsetY } from "./block";
+import { ChunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
+import { BiomeList } from "./biome";
+import { ChunkStage, GenerationProvider } from "./generation";
 import { NumberInputConfig, terrainConfig, ToggleConfig } from "./config";
-import { structureRegistry } from "./structure";
-import { renderDebug } from "./debug";
+import { WGEStructureManager } from "./structure";
 import { clamp } from "./util";
-export let CHUNK_RANGE = 1;
+export let CHUNK_RANGE = 5;
 export let SUBCHUNK_SIZE = 16;
 
 let renderSAM = false;
 export function initChunkConfig() {
-    terrainConfig.addConfigOption(
-        "Render Structure Avoidance Map",
-        new ToggleConfig(
-            () => {return renderSAM},
-            (val) => renderSAM = val
+    terrainConfig
+        .addConfigOption(
+            "Render Structure Avoidance Map",
+            new ToggleConfig(
+                () => {
+                    return renderSAM;
+                },
+                (val) => (renderSAM = val)
+            )
         )
-    ).addConfigOption(
-        "Chunk Build Distance",
-        new NumberInputConfig(
-            () => {
-                return CHUNK_RANGE;
-            },
-            (range) => {
-                CHUNK_RANGE = range;
-            }
-        )
-    );
+        .addConfigOption(
+            "Chunk Build Distance",
+            new NumberInputConfig(
+                () => {
+                    return CHUNK_RANGE;
+                },
+                (range) => {
+                    CHUNK_RANGE = range;
+                }
+            )
+        );
 }
-
 
 export class ChunkPosition {
     x: number;
@@ -43,7 +45,9 @@ export class ChunkPosition {
     }
 
     static fromWorld(pos: Vector2): ChunkPosition {
-        return new ChunkPosition(Math.floor(pos.x / SUBCHUNK_SIZE), Math.floor(pos.y / SUBCHUNK_SIZE));
+        let x = Math.floor(pos.x / SUBCHUNK_SIZE);
+        let y = Math.floor(pos.y / SUBCHUNK_SIZE);
+        return new ChunkPosition(x, y);
     }
 
     static from3D(pos: Vector3): ChunkPosition {
@@ -89,16 +93,11 @@ export class LocalChunkPosition {
     }
 
     static fromWorld(pos: Vector2): LocalChunkPosition {
-        let x = pos.x;
-        let z = pos.y;
-        if (pos.x < 0) {
-            x = -x;
-        }
-        if (pos.y < 0) {
-            z = -z;
-        }
+        const block = ChunkPosition.fromWorld(pos).toBlock();
+        let x = pos.x - block.x;
+        let z = pos.y - block.y;
 
-        return new LocalChunkPosition(Math.floor(x % SUBCHUNK_SIZE), Math.floor(z % SUBCHUNK_SIZE));
+        return new LocalChunkPosition(Math.floor(x), Math.floor(z));
     }
 }
 
@@ -132,196 +131,232 @@ export class Chunk {
     }
 }
 
-// This function is responsible for filling any empty holes below the terrain shape
-function* downStack(pos: ChunkPosition, dim: Dimension): Generator<number> {
-    const noise = chunkNoiseProvider.getOrCacheChunkHeight(pos);
-    const base = pos.toBlock();
-    const heights: Int16Array = new Int16Array(4);
-    for (let x = 0; x < SUBCHUNK_SIZE; x++) {
-        for (let z = 0; z < SUBCHUNK_SIZE; z++) {
-            const currentHeight = noise.get({ x: x, y: z });
-            const samplePositions: BlockPosition[] = [
-                BlockPosition.fromVec({ x: base.x + x - 1, y: base.y + z }),
-                BlockPosition.fromVec({ x: base.x + x + 1, y: base.y + z }),
-                BlockPosition.fromVec({ x: base.x + x, y: base.y + z - 1 }),
-                BlockPosition.fromVec({ x: base.x + x, y: base.y + z + 1 }),
-            ];
+export class WorldChunk {
+    private pos: ChunkPosition;
+    private dim: Dimension;
+    private cnp: ChunkNoiseProvider;
+    private bl: BiomeList;
+    private stage: ChunkStage;
+    private midStage: boolean;
+    private sm: WGEStructureManager;
+    private gp: GenerationProvider;
 
-            for (let idx = 0; idx < samplePositions.length; idx++) {
-                const position = samplePositions[idx];
-                let height;
-                if (ChunkPosition.fromWorld(position) !== pos) {
-                    height = pollNoise2D(position);
-                } else {
-                    height = noise.get(position.toLocalChunk());
-                }
-                heights[idx] = height;
-            }
-            let finished = false;
-            const biome = noise.getBiome(new Vec2(x, z));
-            const surfaceOffset = biomeManager.surfaceOffset(biome);
-            for (let offset = 1; !finished; offset++) {
-                let shouldFill = false;
-                for (const height of heights) {
-                    if (height < currentHeight - offset - surfaceOffset) {
-                        shouldFill = true;
-                        break;
-                    }
-                }
-                if (shouldFill === true) {
-                    dim.setBlockType(
-                        { x: base.x + x, y: currentHeight - surfaceOffset - offset, z: base.y + z },
-                        biomeManager.underground(biome)
-                    );
-                } else {
-                    finished = true;
-                }
-            }
-        }
-        yield 1;
+    /**
+     *
+     * @param pos. This is the position of the chunk to build from
+     * @param dim. This is the dimension the chunk is placed in
+     * @param cnp. This is the instance of ChunkNoiseProvider that this chunk polls
+     * @param bl. This is the list of biomes this chunk can select from
+     * @param stage. This is the last stage this chunk was known to be in. This is used to handle the chunk unloading mid build
+     * @param sm. This is the structure manager
+     * @param gp. This is the generation provider
+     */
+    constructor(
+        pos: ChunkPosition,
+        dim: Dimension,
+        cnp: ChunkNoiseProvider,
+        bl: BiomeList,
+        stage: ChunkStage,
+        sm: WGEStructureManager,
+        gp: GenerationProvider
+    ) {
+        this.pos = pos;
+        this.dim = dim;
+        this.cnp = cnp;
+        this.bl = bl;
+        this.midStage = false;
+        this.stage = stage;
+        this.sm = sm;
+        this.gp = gp;
     }
-}
 
+    *generate() {
+        this.cnp.getOrCacheChunkHeight(this.pos);
+        yield;
 
-function* surface(pos: ChunkPosition, dim: Dimension, yeildEnabled: boolean = false): Generator<void> {
-    for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
-        const surfaceDepth = biomeManager.surfaceOffset(biome);
-        if (biomeManager.multiLayerSurface(biome)) {
-            for (let x = 0; x < surfaceDepth; x++) {
-                dim.setBlockType({ x: world.x, y: val - x, z: world.y }, biomeManager.surface(biome));
+        if (this.stage === ChunkStage.None) {
+            try {
+                for (const _ of this.surface()) {
+                }
+            } catch {
+                this.gp.bailGeneration(this.pos);
             }
-        } else {
-            dim.setBlockType({ x: world.x, y: val, z: world.y }, biomeManager.surface(biome));
-        }
-
-        if (biomeManager.support(biome)) {
-            dim.setBlockType(
-                { x: world.x, y: val - surfaceDepth, z: world.y },
-                biomeManager.underground(biome)
-            );
-        }
-        if (yeildEnabled) {
+            this.stage = this.gp.advanceStage(this.pos, this.stage);
             yield;
-        }        
-    }
-}
-
-function* structure(pos: ChunkPosition, dim: Dimension, lastFinishedStage: ChunkStage, isMidStage: boolean): Generator<void> {
-    let hardPassNeeded = false;
-    if (lastFinishedStage === ChunkStage.Decorate) {
-        let validArray = new PlaneArray(SUBCHUNK_SIZE, SUBCHUNK_SIZE, 0);
-        const cache = chunkNoiseProvider.getCache(pos);
-
-        for (let x = 0; x < SUBCHUNK_SIZE; x++) {
-            for (let z = 0; z < SUBCHUNK_SIZE; z++) {
-                if (validArray.get(new Vec2(x, z)) !== 0) {
-                    continue;
-                }
-                var skip = structureRegistry.spawnStructure(
-                    biomeManager.getBiome(cache.getBiome(new Vec2(x, z))),
-                    chunkOffsetY(pos, new Vec2(x, z), cache.get(new Vec2(x, z))),
-                    dim
-                );
-                yield;
-                if (skip === undefined) {
-                    continue;
-                }
-                hardPassNeeded = true;
-                for (let x_sub = x - skip.low.x; x_sub < x + skip.high.x + 1; x_sub++) {
-                    for (let z_sub = z - skip.low.y; z_sub < z + skip.high.y + 1; z_sub++) {
-                        validArray.set(
-                            new Vec2(clamp(x_sub, 0, SUBCHUNK_SIZE - 1), clamp(z_sub, 0, SUBCHUNK_SIZE - 1)),
-                            1
-                        );
-
-
-                    }
-                }
-            }
+        } else {
+            this.midStage = true;
         }
 
-        if (renderSAM) {
+        if (this.stage === ChunkStage.BaseLayer) {
+            try {
+                for (const e of this.downStack()) {
+                    yield;
+                }
+            } catch {
+                this.gp.bailGeneration(this.pos);
+            }
+            this.stage = this.gp.advanceStage(this.pos, this.stage);
+            yield;
+        }
+
+        if (this.stage === ChunkStage.DownStack) {
+            for (let { world, val, biome } of this.cnp.tiedChunkHeightMap(this.pos)) {
+                try {
+                    this.bl.decorate(biome, new Vec3(world.x, val, world.y), this.dim);
+                    yield;
+                } catch {
+                    return this.gp.bailGeneration(this.pos);
+                }
+            }
+            this.stage = this.gp.advanceStage(this.pos, this.stage);
+            yield;
+        }
+
+        if (this.stage === ChunkStage.Decorate) {
+            try {
+                for (const _ of this.structure(this.midStage)) {
+                    yield;
+                }
+            } catch {
+                this.gp.bailGeneration(this.pos);
+            }
+            this.stage += 2;
+        }
+
+        this.gp.finishChunk(this.pos, this.stage);
+    }
+
+    *surface(yeildEnabled: boolean = false) {
+        for (let { world, val, biome } of this.cnp.tiedChunkHeightMap(this.pos)) {
+            const surfaceDepth = this.bl.surfaceOffset(biome);
+            if (this.bl.multiLayerSurface(biome)) {
+                for (let x = 0; x < surfaceDepth; x++) {
+                    this.dim.setBlockType({ x: world.x, y: val - x, z: world.y }, this.bl.surface(biome));
+                }
+            } else {
+                this.dim.setBlockType({ x: world.x, y: val, z: world.y }, this.bl.surface(biome));
+            }
+
+            if (this.bl.support(biome)) {
+                this.dim.setBlockType({ x: world.x, y: val - surfaceDepth, z: world.y }, this.bl.underground(biome));
+            }
+            if (yeildEnabled) {
+                yield;
+            }
+        }
+    }
+
+    *structure(isMidStage: boolean): Generator<void> {
+        let hardPassNeeded = false;
+        if (this.stage === ChunkStage.Decorate) {
+            let validArray = new PlaneArray(SUBCHUNK_SIZE, SUBCHUNK_SIZE, 0);
+            const cache = this.cnp.getCache(this.pos);
+
             for (let x = 0; x < SUBCHUNK_SIZE; x++) {
                 for (let z = 0; z < SUBCHUNK_SIZE; z++) {
-                    const position = chunkOffsetY(pos, new Vec2(x, z), cache.get(new Vec2(x, z)) - 20);
-                    try {
-                        if (validArray.get(new Vec2(x, z)) !== 0) {
-                            dim.setBlockType(position, "blue_wool");
-                        } else {
-                            dim.setBlockType(position, "red_wool");
+                    if (validArray.get(new Vec2(x, z)) !== 0) {
+                        continue;
+                    }
+                    var skip = this.sm.spawnStructure(
+                        this.bl.getBiome(cache.getBiome(new Vec2(x, z))),
+                        chunkOffsetY(this.pos, new Vec2(x, z), cache.get(new Vec2(x, z))),
+                        this.dim
+                    );
+                    yield;
+                    if (skip === undefined) {
+                        continue;
+                    }
+                    hardPassNeeded = true;
+                    for (let x_sub = x - skip.low.x; x_sub < x + skip.high.x + 1; x_sub++) {
+                        for (let z_sub = z - skip.low.y; z_sub < z + skip.high.y + 1; z_sub++) {
+                            validArray.set(
+                                new Vec2(clamp(x_sub, 0, SUBCHUNK_SIZE - 1), clamp(z_sub, 0, SUBCHUNK_SIZE - 1)),
+                                1
+                            );
                         }
-                        yield;
-                    } catch {}
+                    }
                 }
             }
-        }
 
-        yield;
-        lastFinishedStage = advanceStage(pos, lastFinishedStage);
-    }
-
-    if ((hardPassNeeded && !isMidStage) || (isMidStage && ChunkStage.Structure)) {
-        try {
-            for (const _ of surface(pos, dim, true)) {yield;}
-        } catch {
-            bailGeneration(pos);
-            return;
-        }
-        lastFinishedStage = advanceStage(pos, lastFinishedStage);
-        yield;
-    } else {
-        lastFinishedStage = advanceStage(pos, lastFinishedStage);
-    }
-}
-
-export function* buildChunk(pos: ChunkPosition, dim: Dimension, lastFinishedStage: ChunkStage, isMidStage: boolean) {
-    chunkNoiseProvider.getOrCacheChunkHeight(pos);
-    yield;
-
-    if (lastFinishedStage === ChunkStage.None) {
-        try {
-            for (const _ of surface(pos, dim)) {}
-        } catch {
-            bailGeneration(pos);
-        }
-        lastFinishedStage = advanceStage(pos, lastFinishedStage);
-        yield;
-    }
-
-    if (lastFinishedStage === ChunkStage.BaseLayer) {
-        try {
-            for (const e of downStack(pos, dim)) {
-                yield;
+            if (renderSAM) {
+                for (let x = 0; x < SUBCHUNK_SIZE; x++) {
+                    for (let z = 0; z < SUBCHUNK_SIZE; z++) {
+                        const position = chunkOffsetY(this.pos, new Vec2(x, z), cache.get(new Vec2(x, z)) - 20);
+                        try {
+                            if (validArray.get(new Vec2(x, z)) !== 0) {
+                                this.dim.setBlockType(position, "blue_wool");
+                            } else {
+                                this.dim.setBlockType(position, "red_wool");
+                            }
+                            yield;
+                        } catch {}
+                    }
+                }
             }
-        } catch {
-            bailGeneration(pos);
-        }
-        lastFinishedStage = advanceStage(pos, lastFinishedStage);
-        yield;
-    }
 
-    if (lastFinishedStage === ChunkStage.DownStack) {
-        for (let { world, val, biome } of chunkNoiseProvider.tiedChunkHeightMap(pos)) {
+            yield;
+        }
+
+        if ((hardPassNeeded && !isMidStage) || (isMidStage && ChunkStage.Structure)) {
             try {
-                biomeManager.decorate(biome, new Vec3(world.x, val, world.y), dim);
-                yield;
+                for (const _ of this.surface(true)) {
+                    yield;
+                }
             } catch {
-                return bailGeneration(pos);
+                this.gp.bailGeneration(this.pos);
+                return;
             }
+            yield;
         }
-        lastFinishedStage = advanceStage(pos, lastFinishedStage);
-        yield;
     }
 
-    if (lastFinishedStage === ChunkStage.Decorate) {
-        try {
-            for (const _ of structure(pos, dim, lastFinishedStage, isMidStage)) {yield;}
-        } catch {
-            bailGeneration(pos);
+    *downStack(): Generator<number> {
+        const noise = this.cnp.getOrCacheChunkHeight(this.pos);
+        const base = this.pos.toBlock();
+        const heights: Int16Array = new Int16Array(4);
+        for (let x = 0; x < SUBCHUNK_SIZE; x++) {
+            for (let z = 0; z < SUBCHUNK_SIZE; z++) {
+                const currentHeight = noise.get({ x: x, y: z });
+                const samplePositions: BlockPosition[] = [
+                    BlockPosition.fromVec({ x: base.x + x - 1, y: base.y + z }),
+                    BlockPosition.fromVec({ x: base.x + x + 1, y: base.y + z }),
+                    BlockPosition.fromVec({ x: base.x + x, y: base.y + z - 1 }),
+                    BlockPosition.fromVec({ x: base.x + x, y: base.y + z + 1 }),
+                ];
+
+                for (let idx = 0; idx < samplePositions.length; idx++) {
+                    const position = samplePositions[idx];
+                    let height;
+                    if (ChunkPosition.fromWorld(position) !== this.pos) {
+                        //height = pollNoise2D(position);
+                        height = this.cnp.getHeightCacheOrNew(position);
+                    } else {
+                        height = noise.get(position.toLocalChunk());
+                    }
+                    heights[idx] = height;
+                }
+                let finished = false;
+                const biome = noise.getBiome(new Vec2(x, z));
+                const surfaceOffset = this.bl.surfaceOffset(biome);
+                for (let offset = 1; !finished; offset++) {
+                    let shouldFill = false;
+                    for (const height of heights) {
+                        if (height < currentHeight - offset - surfaceOffset) {
+                            shouldFill = true;
+                            break;
+                        }
+                    }
+                    if (shouldFill === true) {
+                        this.dim.setBlockType(
+                            { x: base.x + x, y: currentHeight - surfaceOffset - offset, z: base.y + z },
+                            this.bl.underground(biome)
+                        );
+                    } else {
+                        finished = true;
+                    }
+                }
+            }
+            yield 1;
         }
-        lastFinishedStage += 2;
     }
-    
-    
-    finishChunk(pos, lastFinishedStage);
 }

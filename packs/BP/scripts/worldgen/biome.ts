@@ -96,7 +96,7 @@ export function initBiomeConfig() {
 }
 
 
-class BiomeList {
+export class BiomeList {
     private biomes: Biome[];
 
     constructor() {
@@ -225,5 +225,3 @@ class BiomeList {
         return this.getBiome(index).multiLayerSurface;
     }
 }
-
-export let biomeManager = new BiomeList();

@@ -1,29 +1,29 @@
 import { Player, system, Vector3, world } from "@minecraft/server";
-import { initGenConfig, loadVisitedCaches, managePlayer, saveVisitedCaches, visitedChunks, workingChunks } from "./worldgen/generation";
+import { initGenConfig, GenerationProvider } from "./worldgen/generation";
 import { registerBiomes } from "./worldgen/biomes";
 import { terrainConfig, ToggleConfig } from "./worldgen/config";
-import { chunkNoiseProvider, initChunkNoiseProviderConfig } from "./worldgen/ChunkNoiseProvider";
+import { initChunkNoiseProviderConfig } from "./worldgen/ChunkNoiseProvider";
 import { initDebugConfig, manageDebugPlayer } from "./worldgen/debug";
 import { ChunkPosition, initChunkConfig } from "./worldgen/chunk";
 import { runJob } from "./job";
 import { Vec2 } from "./worldgen/Vec";
 import { initCacheConfig, initLimits, performCacheCleanup } from "./worldgen/cache";
-import { biomeManager, initBiomeConfig } from "./worldgen/biome";
+import { initBiomeConfig } from "./worldgen/biome";
 import { decodeWorldToJson, deleteWorldInfo, dumpJson, writeJsonToWorld } from "./serialize";
 import { initNoiseConfig } from "./worldgen/noise";
 import { initRandom } from "./worldgen/random";
 import { registerStructures } from "./worldgen/structures";
-import { structureRegistry } from "./worldgen/structure";
 
 export let mainLocation: Vector3;
 let dim = world.getDimension("overworld");
+let gp = new GenerationProvider(dim);
 
-registerBiomes();
-registerStructures();
-structureRegistry.buildIndexes(biomeManager.allbiomes());
+registerBiomes(gp);
+registerStructures(gp.sr);
+gp.sr.buildIndexes(gp.bm.allbiomes());
 initLimits();
 initRandom();
-loadVisitedCaches();
+
 
 export function saveConfig(enableLog?: boolean) {
     writeJsonToWorld("WGE_CONFIG_DATA", terrainConfig.serializeToJson(), enableLog);
@@ -45,9 +45,8 @@ function forceDropCache() {
     
     const location = dim.getPlayers()[0].location;
     const start = ChunkPosition.fromWorld(new Vec2(location.x, location.z));
-    runJob(chunkNoiseProvider.dropUselessInfo(start, 0.0));
-    visitedChunks.clear();
-    workingChunks.clear();
+    runJob(gp.cnp.dropUselessInfo(start, 0.0));
+    
 }
 
 system.afterEvents.scriptEventReceive.subscribe((event) => {
@@ -59,7 +58,7 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
         case "wge:cache": {
             const location = dim.getPlayers()[0].location;
             const start = ChunkPosition.fromWorld(new Vec2(location.x, location.z));
-            runJob(chunkNoiseProvider.dropUselessInfo(start, 0.5));
+            runJob(gp.cnp.dropUselessInfo(start, 0.5));
             break;
         }
         case "wge:dropcache": {
@@ -84,10 +83,10 @@ system.beforeEvents.watchdogTerminate.subscribe((arg) => {
 system.runInterval(() => {
     dim.getPlayers().forEach((player) => {
         mainLocation = player.location;
-        managePlayer(player, dim);
-        manageDebugPlayer(player, dim);
+        gp.handlePlayer(player);
+        manageDebugPlayer(player, dim, gp);
     });
-    performCacheCleanup();
+    performCacheCleanup(gp);
 }, 0);
 
 
@@ -123,7 +122,7 @@ function initMainConfig() {
             return;
         }
         forceCompaction = false;
-        performCacheCleanup(true);
+        performCacheCleanup(gp, true);
     }).addConfigOption(
         "Drop Visited Caches",
         new ToggleConfig(
@@ -140,7 +139,7 @@ function initMainConfig() {
 }
 
 world.afterEvents.worldInitialize.subscribe((_) => {
-    initDebugConfig();-
+    initDebugConfig();
     initChunkConfig();
     initCacheConfig();
     initBiomeConfig();
@@ -157,5 +156,5 @@ world.beforeEvents.playerLeave.subscribe((_) => {
         return;
     }
     console.log("Saving");
-    saveVisitedCaches();
+    gp.saveVisitedCaches();
 });

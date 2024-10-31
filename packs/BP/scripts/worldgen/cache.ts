@@ -1,9 +1,10 @@
 import { MemoryTier, system, world } from "@minecraft/server";
 import { runJob } from "../job";
-import { chunkNoiseProvider } from "./ChunkNoiseProvider";
+import {  } from "./ChunkNoiseProvider";
 import { ChunkPosition } from "./chunk";
 import { mainLocation } from "../main";
 import { terrainConfig, TextConfig } from "./config";
+import { GenerationProvider } from "./generation";
 
 export let CacheClearLimit = 0xdeadbeef;
 export let KeepPercent = 0.5;
@@ -71,11 +72,11 @@ export function initLimits() {
 
 let cleanupRunning = false;
 
-export function performCacheCleanup(force?: boolean) {
-    if ((chunkNoiseProvider.getTotalCacheSize() > CacheClearLimit && !cleanupRunning) || force) {
+export function performCacheCleanup(gp: GenerationProvider,force?: boolean) {
+    if ((gp.cnp.getTotalCacheSize() > CacheClearLimit && !cleanupRunning) || force) {
         cleanupRunning = true;
         runJob(
-            chunkNoiseProvider.dropUselessInfo(ChunkPosition.from3D(mainLocation), KeepPercent, () => {
+            gp.cnp.dropUselessInfo(ChunkPosition.from3D(mainLocation), KeepPercent, () => {
                 cleanupRunning = false;
             })
         );
