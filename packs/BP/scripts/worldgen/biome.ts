@@ -96,7 +96,7 @@ export function initBiomeConfig() {
 }
 
 
-class BiomeList {
+export class BiomeList {
     private biomes: Biome[];
 
     constructor() {
@@ -117,6 +117,10 @@ class BiomeList {
 
     addBiome(biome: Biome) {
         this.biomes.push(biome);
+    }
+
+    getGlobalUnderground() {
+        return "stone";
     }
 
     private getHeight(raw: number): HeightBias {
@@ -225,5 +229,3 @@ class BiomeList {
         return this.getBiome(index).multiLayerSurface;
     }
 }
-
-export let biomeManager = new BiomeList();

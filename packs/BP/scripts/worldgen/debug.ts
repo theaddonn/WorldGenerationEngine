@@ -1,12 +1,13 @@
 import { Dimension, Player } from "@minecraft/server";
-import { chunkNoiseProvider } from "./ChunkNoiseProvider";
+import {} from "./ChunkNoiseProvider";
 import { Vec2, Vector2ToString } from "./Vec";
 import { mainLocation } from "../main";
 import { ChunkPosition } from "./chunk";
 import { CacheClearLimit } from "./cache";
 import { terrainConfig, ToggleConfig } from "./config";
-import { biomeManager } from "./biome";
+import {} from "./biome";
 import { renderRandomDebug } from "./random";
+import { GenerationProvider } from "./generation";
 
 class DebugRendering {
     private lineList: String[];
@@ -88,8 +89,9 @@ export function initDebugConfig() {
         );
 }
 
-export function manageDebugPlayer(player: Player, dim: Dimension) {
+export function manageDebugPlayer(player: Player, dim: Dimension, gp: GenerationProvider) {
     if (renderDebug) {
+        gp.debug();
         debug
             .update(
                 "Location",
@@ -99,33 +101,32 @@ export function manageDebugPlayer(player: Player, dim: Dimension) {
                 "Chunk Position",
                 Vector2ToString(ChunkPosition.fromWorld(new Vec2(mainLocation.x, mainLocation.z)))
             );
-            renderRandomDebug();
+        renderRandomDebug();
 
         if (showCacheSizes) {
             debug
-                .update("World Cache Size", chunkNoiseProvider.chunkHeightmap.size)
-                .update("Climate Cache Size", chunkNoiseProvider.climateCache.size)
-                .update("Tie Breaker Cache Size", chunkNoiseProvider.tieCache.size)
-                .update("Moisture Cache Size", chunkNoiseProvider.moistureCache.size)
-                .update("Total Cache Size", `${chunkNoiseProvider.getTotalCacheSize()} Out Of ${CacheClearLimit}`);
+                .update("World Cache Size", gp.cnp.chunkHeightmap.size)
+                .update("Climate Cache Size", gp.cnp.climateCache.size)
+                .update("Tie Breaker Cache Size", gp.cnp.tieCache.size)
+                .update("Moisture Cache Size", gp.cnp.moistureCache.size)
+                .update("Total Cache Size", `${gp.cnp.getTotalCacheSize()} Out Of ${CacheClearLimit}`);
         }
         if (showNoise) {
             debug
-                .update("Climate", `${chunkNoiseProvider.getClimateNoiseFull(mainLocation)}`)
-                .update("Tie Breaker", `${chunkNoiseProvider.getTieBreakerNoiseFull(mainLocation)}`)
-                .update("Moisture", `${chunkNoiseProvider.getMoistureNoiseFull(mainLocation)}`)
-                .update("Height", `${chunkNoiseProvider.getHeightNoiseFull(mainLocation)}`);
+                .update("Climate", `${gp.cnp.getClimateNoiseFull(mainLocation)}`)
+                .update("Tie Breaker", `${gp.cnp.getTieBreakerNoiseFull(mainLocation)}`)
+                .update("Moisture", `${gp.cnp.getMoistureNoiseFull(mainLocation)}`)
+                .update("Height", `${gp.cnp.getHeightNoiseFull(mainLocation)}`);
         }
         if (showBiomeStack) {
-            biomeManager.getBiomeIndexNew(
-                chunkNoiseProvider.getClimateNoiseFull(mainLocation),
-                chunkNoiseProvider.getHeightNoiseFull(mainLocation),
-                chunkNoiseProvider.getTieBreakerNoiseFull(mainLocation),
-                chunkNoiseProvider.getMoistureNoiseFull(mainLocation),
+            gp.bm.getBiomeIndexNew(
+                gp.cnp.getClimateNoiseFull(mainLocation),
+                gp.cnp.getHeightNoiseFull(mainLocation),
+                gp.cnp.getTieBreakerNoiseFull(mainLocation),
+                gp.cnp.getMoistureNoiseFull(mainLocation),
                 true
             );
         }
-
 
         dim.runCommandAsync(`titleraw ${player.name} clear`);
         dim.runCommandAsync(`titleraw ${player.name} actionbar {"rawtext":[{"text": "${debug.build()}"}]}`);

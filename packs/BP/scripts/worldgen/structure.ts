@@ -12,7 +12,7 @@ export interface WGEStructure {
     spawn(biome: Biome, pos: Vector3, dim: Dimension): void;
 } 
 
-class StructureManager {
+export class WGEStructureManager {
     private structures: WGEStructure[];
     private structureLookup: Map<String, WGEStructure[]>;
     constructor() {
@@ -20,7 +20,7 @@ class StructureManager {
         this.structureLookup = new Map();
     }
 
-    addStructure(struct: WGEStructure): StructureManager {
+    addStructure(struct: WGEStructure): WGEStructureManager {
         this.structures.push(struct);
         return this;
     }
@@ -47,6 +47,3 @@ class StructureManager {
         return structure.skipFromCenter();
     }
 }
-
-
-export let structureRegistry = new StructureManager(); 

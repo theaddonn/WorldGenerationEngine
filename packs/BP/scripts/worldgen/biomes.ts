@@ -1,7 +1,8 @@
 import { Dimension, world } from "@minecraft/server";
-import { Biome, biomeManager, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
+import { Biome, ClimateSelections, HeightBias, MoistureSelections } from "./biome";
 import { Vec3 } from "./Vec";
 import { random } from "./random";
+import { GenerationProvider } from "./generation";
 const TALL_THRESHHOLD = 0.97;
 const GRASS_THRESHHOLD = 0.80;
 const SHRUB_THRESHHOLD = 0.9;
@@ -157,12 +158,12 @@ class SandMountianTall extends Biome {
     decorate(pos: Vec3, dim: Dimension) {}
 }
 
-export function registerBiomes() {
-    biomeManager.addBiome(new Planes());
-    biomeManager.addBiome(new Mountian());
-    biomeManager.addBiome(new Desert());
-    biomeManager.addBiome(new FrozenPlanes());
-    biomeManager.addBiome(new SandMountian());
-    biomeManager.addBiome(new FrozenMountian());
+export function registerBiomes(gp: GenerationProvider) {
+    gp.bm.addBiome(new Planes());
+    gp.bm.addBiome(new Mountian());
+    gp.bm.addBiome(new Desert());
+    gp.bm.addBiome(new FrozenPlanes());
+    gp.bm.addBiome(new SandMountian());
+    gp.bm.addBiome(new FrozenMountian());
     //biomeManager.addBiome(new SandMountianTall());
 }

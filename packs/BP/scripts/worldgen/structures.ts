@@ -1,7 +1,7 @@
-import { BlockVolumeBase, BoundingBoxUtils, Dimension, Structure, StructureManager, Vector2, Vector3, world } from "@minecraft/server";
-import { Biome, biomeManager } from "./biome";
-import { structureRegistry, WGEStructure } from "./structure";
-import { Vec2, Vec3, Vector3ToString } from "./Vec";
+import { Dimension, Structure, Vector2, Vector3, world } from "@minecraft/server";
+import { Biome, } from "./biome";
+import { WGEStructure, WGEStructureManager } from "./structure";
+import { Vec2 } from "./Vec";
 import { random } from "./random";
 
 class Tree implements WGEStructure {
@@ -50,8 +50,8 @@ class Tree implements WGEStructure {
 }
 
 
-export function registerStructures() {
-    structureRegistry
+export function registerStructures(sm: WGEStructureManager) {
+    sm
         .addStructure(new Tree(
             ["custom:planes"],
             "oak_tree_one",

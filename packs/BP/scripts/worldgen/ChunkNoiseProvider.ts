@@ -2,9 +2,9 @@ import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
 import { Chunk, ChunkPosition, LocalChunkPosition, SUBCHUNK_SIZE } from "./chunk";
 import { idx2D } from "./util";
 import { PerlinNoise2D, pollClimateNoise2D, pollMoistureNoise2D, pollTieNoise2D, singlePerlin2D } from "./noise";
-import { Vec2, Vector2ToString } from "./Vec";
+import { Vec2, Vec3, Vector2ToString } from "./Vec";
 import { BlockPosition } from "./block";
-import { biomeManager } from "./biome";
+import { BiomeList } from "./biome";
 import { FloatSliderConfig, SliderConfig, terrainConfig } from "./config";
 
 export let OCTAVE_2D = 5;
@@ -86,15 +86,17 @@ export function initChunkNoiseProviderConfig() {
 
 export let HEIGHT_MAX = Math.round(BASE_OFFSET + AMPLITUDE * 1);
 export let HEIGHT_MIN = Math.round(BASE_OFFSET - AMPLITUDE * 1.1);
-class ChunkNoise {
+export class ChunkNoise {
     values: Int16Array;
     biomeIndex: Int16Array;
     highestPoint: number;
+    lowestPoint: number;
 
-    constructor(values: Int16Array, biomeIndex: Int16Array, highestPoint: number) {
+    constructor(values: Int16Array, biomeIndex: Int16Array, highestPoint: number, lowestPoint: number) {
         this.values = values;
         this.biomeIndex = biomeIndex;
         this.highestPoint = highestPoint;
+        this.lowestPoint = lowestPoint;
     }
 
     get(pos: Vector2): number {
@@ -105,17 +107,20 @@ class ChunkNoise {
     }
 }
 
-class ChunkNoiseProvider {
+export class ChunkNoiseProvider {
     chunkHeightmap: Map<String, ChunkNoise>;
     climateCache: Map<String, Float32Array>;
     tieCache: Map<String, Float32Array>;
     moistureCache: Map<String, Float32Array>;
+    private bm: BiomeList;
 
-    constructor() {
+    constructor(bm: BiomeList) {
         this.chunkHeightmap = new Map();
         this.climateCache = new Map();
         this.tieCache = new Map();
         this.moistureCache = new Map();
+        this.bm = bm;
+
     }
 
     *getChunkHeightMap(pos: Vector2): Generator<number> {
@@ -141,7 +146,7 @@ class ChunkNoiseProvider {
         return heightMap.highestPoint;
     }
 
-    buildHeight(pos: Vector2): { largest: number; heightmap: Int16Array; biomemap: Int16Array } {
+    buildHeight(pos: Vector2): { largest: number; heightmap: Int16Array; biomemap: Int16Array; smallest: number } {
         let tieBreakerNoise = new Float32Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
         let climateNoise = new Float32Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
         let heightmap = new Int16Array(SUBCHUNK_SIZE * SUBCHUNK_SIZE);
@@ -157,7 +162,7 @@ class ChunkNoiseProvider {
 
         const finalizedBiomeData = this.generateBiomeData(heightmap, climateNoise, tieBreakerNoise, moistureMap);
 
-        return { largest, heightmap, biomemap: finalizedBiomeData };
+        return { largest, heightmap, biomemap: finalizedBiomeData, smallest };
     }
 
     getCache(pos: ChunkPosition): ChunkNoise {
@@ -227,7 +232,7 @@ class ChunkNoiseProvider {
     getHeightNoise(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
         const cache = this.chunkHeightmap.get(Vector2ToString(Chunk));
         if (cache === undefined) {
-            return 0.5;
+            return 9000;
         } else {
             return cache.get(Local);
         }
@@ -236,8 +241,20 @@ class ChunkNoiseProvider {
         const chunkPos = ChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         const local = LocalChunkPosition.fromWorld({ x: fullPos.x, y: fullPos.z });
         return this.getHeightNoise(chunkPos, local);
-
     } 
+
+    getHeightWithCacheGeneration(pos: BlockPosition): number {
+        this.getOrCacheChunkHeight(pos.toChunk());
+        return this.getHeightNoiseFull({x: pos.x, y: NaN, z: pos.y});
+    }
+
+    getHeightCacheOrNew(pos: BlockPosition): number {
+        if (this.chunkHeightmap.has(Vector2ToString(pos))) {
+            return this.getHeightNoiseFull(new Vec3(pos.x, 0, pos.y));
+        } else {
+            return pollNoise2D(pos);
+        }
+    }
 
     getBiome(Chunk: ChunkPosition, Local: LocalChunkPosition): number {
         const cache = this.chunkHeightmap.get(Vector2ToString(Chunk));
@@ -292,7 +309,7 @@ class ChunkNoiseProvider {
         for (let x = 0; x < SUBCHUNK_SIZE; x++) {
             for (let z = 0; z < SUBCHUNK_SIZE; z++) {
                 const index = idx2D(new Vec2(x, z));
-                biomeData[index] = biomeManager.getBiomeIndexNew(
+                biomeData[index] = this.bm.getBiomeIndexNew(
                     climateNoise[index],
                     heightmap[index],
                     tieBreakerNoise[index],
@@ -313,7 +330,7 @@ class ChunkNoiseProvider {
         } else {
             const outData = this.buildHeight(pos);
 
-            const noise = new ChunkNoise(outData.heightmap, outData.biomemap, outData.largest);
+            const noise = new ChunkNoise(outData.heightmap, outData.biomemap, outData.largest, outData.smallest);
             this.chunkHeightmap.set(Vector2ToString(pos), noise);
             return noise;
         }
@@ -362,4 +379,3 @@ export function pollNoise2D(pos: Vector2): number {
     return height;
 }
 
-export let chunkNoiseProvider = new ChunkNoiseProvider();
