@@ -119,6 +119,10 @@ export class BiomeList {
         this.biomes.push(biome);
     }
 
+    getGlobalUnderground() {
+        return "stone";
+    }
+
     private getHeight(raw: number): HeightBias {
         if (raw <= HEIGHT_MAX * HeightBias.LOW) {
             return HeightBias.LOW;

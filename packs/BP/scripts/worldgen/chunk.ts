@@ -1,4 +1,4 @@
-import { Dimension, Vector2, Vector3, world } from "@minecraft/server";
+import { BlockVolume, Dimension, Vector2, Vector3, world } from "@minecraft/server";
 import { Vec2, Vec3, Vector2ToString, Vector3ToString } from "./Vec";
 import { BlockPosition, chunkOffsetY } from "./block";
 import { ChunkNoiseProvider, pollNoise2D } from "./ChunkNoiseProvider";
@@ -310,53 +310,25 @@ export class WorldChunk {
         }
     }
 
-    *downStack(): Generator<number> {
+    *downStack(): Generator<void> {
         const noise = this.cnp.getOrCacheChunkHeight(this.pos);
         const base = this.pos.toBlock();
-        const heights: Int16Array = new Int16Array(4);
-        for (let x = 0; x < SUBCHUNK_SIZE; x++) {
-            for (let z = 0; z < SUBCHUNK_SIZE; z++) {
-                const currentHeight = noise.get({ x: x, y: z });
-                const samplePositions: BlockPosition[] = [
-                    BlockPosition.fromVec({ x: base.x + x - 1, y: base.y + z }),
-                    BlockPosition.fromVec({ x: base.x + x + 1, y: base.y + z }),
-                    BlockPosition.fromVec({ x: base.x + x, y: base.y + z - 1 }),
-                    BlockPosition.fromVec({ x: base.x + x, y: base.y + z + 1 }),
-                ];
-
-                for (let idx = 0; idx < samplePositions.length; idx++) {
-                    const position = samplePositions[idx];
-                    let height;
-                    if (ChunkPosition.fromWorld(position) !== this.pos) {
-                        //height = pollNoise2D(position);
-                        height = this.cnp.getHeightCacheOrNew(position);
-                    } else {
-                        height = noise.get(position.toLocalChunk());
-                    }
-                    heights[idx] = height;
-                }
-                let finished = false;
-                const biome = noise.getBiome(new Vec2(x, z));
-                const surfaceOffset = this.bl.surfaceOffset(biome);
-                for (let offset = 1; !finished; offset++) {
-                    let shouldFill = false;
-                    for (const height of heights) {
-                        if (height < currentHeight - offset - surfaceOffset) {
-                            shouldFill = true;
-                            break;
-                        }
-                    }
-                    if (shouldFill === true) {
-                        this.dim.setBlockType(
-                            { x: base.x + x, y: currentHeight - surfaceOffset - offset, z: base.y + z },
-                            this.bl.underground(biome)
-                        );
-                    } else {
-                        finished = true;
-                    }
-                }
-            }
-            yield 1;
+        const bottomCorner = new Vec3(base.x, 0, base.y);
+        const topCorner = new Vec3(
+            bottomCorner.x + SUBCHUNK_SIZE - 1,
+            noise.lowestPoint - 1,
+            bottomCorner.z + SUBCHUNK_SIZE - 1
+        );
+        this.dim.fillBlocks(new BlockVolume(bottomCorner, topCorner), this.bl.getGlobalUnderground());
+        for (const {world, val, biome} of this.cnp.tiedChunkHeightMap(this.pos)) {
+            this.dim.fillBlocks(
+                new BlockVolume(
+                    new Vec3(world.x, val -1, world.y),
+                    new Vec3(world.x, noise.lowestPoint -1, world.y)
+                ),
+                this.bl.underground(biome)
+            );
+            yield;
         }
     }
 }
